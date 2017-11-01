@@ -98,20 +98,14 @@ static NSString *listCellIndentify = @"listCell";
     RoomInfoModel *model = self.listDataArray[indexPath.row];
     
     if (model.status == 1) {
-        
         LiveRoomViewController *liveRoomVC = [[LiveRoomViewController alloc] init];
-        //liveRoomVC.playUrl = model.playUrl;
         liveRoomVC.roomId = model.roomId;
         liveRoomVC.hostUid = model.uid;
         liveRoomVC.liveName = model.name;
         NSString *userId = [[NSUserDefaults standardUserDefaults] objectForKey:USERID];
         liveRoomVC.userUid = userId;
-//        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-//        pasteboard.string = liveRoomVC.playUrl;
-        //        NSString *play = [[model.rtmpPlayUrl componentsSeparatedByString:@"_mhd"] firstObject];
         liveRoomVC.playUrl = model.rtmpPlayUrl;
         [self presentViewController:liveRoomVC animated:YES completion:nil];
-        
     } else {
         AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"提示" icon:nil message:@"当前主播还未开始直播，请稍后下拉刷新列表重试" delegate:nil buttonTitles:@"OK",nil];
         [alert showInView:self.view];
