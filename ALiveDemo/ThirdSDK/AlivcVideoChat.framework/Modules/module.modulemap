@@ -1,0 +1,6 @@
+framework module AlivcVideoChat {
+  umbrella header "AlivcVideoChat.h"
+
+  export *
+  module * { export * }
+}

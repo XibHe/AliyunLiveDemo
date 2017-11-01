@@ -1,0 +1,40 @@
+//
+//  PrefixHeader.pch
+//  ALiveDemo
+//
+//  Created by zyjk_iMac-penghe on 2017/10/25.
+//  Copyright © 2017年 zyjk_iMac-penghe. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+#define firstLaunchApp  @"firstLaunchAPP"
+#define USERID          @"userId"
+#define NAME            @"name"
+
+#define kAlivcLiveHost @"http://118.178.94.208:3000/"
+
+#define ScreenWidth [UIScreen mainScreen].bounds.size.width
+#define ScreenHeight [UIScreen mainScreen].bounds.size.height
+#define kAlivcColor [UIColor colorWithRed:123 / 255.0 green:134 / 255.0 blue:252 / 255.0 alpha:1]
+
+// 日志输出宏定义
+#ifdef DEBUG
+#define CSLog( s, ... ) printf("class: <%p %s:(%d) > method: %s \n%s\n", self, [[[NSString stringWithUTF8String:__FILE__] lastPathComponent] UTF8String], __LINE__, __PRETTY_FUNCTION__, [[NSString stringWithFormat:(s), ##__VA_ARGS__] UTF8String] );
+#else
+#define CSLog( s, ... )
+#endif
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+#import "UIView+Frame.h"
+
+#endif /* PrefixHeader_pch */
+
+
+
+
+
+

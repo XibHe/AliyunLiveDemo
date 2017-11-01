@@ -1,0 +1,6 @@
+framework module AlivcLibRtmp {
+  umbrella header "AlivcLibRtmp.h"
+
+  export *
+  module * { export * }
+}
