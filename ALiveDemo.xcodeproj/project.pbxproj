@@ -41,6 +41,8 @@
 		3B65B9801FA06D1C00E61A1C /* AFURLResponseSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 3B65B9791FA06D1C00E61A1C /* AFURLResponseSerialization.m */; };
 		3B65B9811FA06D1C00E61A1C /* AFURLSessionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3B65B97B1FA06D1C00E61A1C /* AFURLSessionManager.m */; };
 		3B65B9851FA06F6700E61A1C /* StartLiveViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3B65B9841FA06F6700E61A1C /* StartLiveViewController.mm */; };
+		3B71B2E31FA9C8BA0002D17C /* LiveInviteInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 3B71B2E11FA9C8BA0002D17C /* LiveInviteInfo.m */; };
+		3B71B2E61FA9EDFA0002D17C /* chatView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3B71B2E41FA9EDF90002D17C /* chatView.m */; };
 		3BAC8A611FA6CB4700B95A60 /* UIView+Frame.m in Sources */ = {isa = PBXBuildFile; fileRef = 3BAC8A601FA6CB4600B95A60 /* UIView+Frame.m */; };
 		3BAC8A681FA7015100B95A60 /* LiveListCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 3BAC8A661FA7015100B95A60 /* LiveListCell.m */; };
 		3BAC8A691FA7015100B95A60 /* LiveListCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3BAC8A671FA7015100B95A60 /* LiveListCell.xib */; };
@@ -170,6 +172,10 @@
 		3B65B9831FA06F6700E61A1C /* StartLiveViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StartLiveViewController.h; sourceTree = "<group>"; };
 		3B65B9841FA06F6700E61A1C /* StartLiveViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = StartLiveViewController.mm; sourceTree = "<group>"; };
 		3B65B9861FA0758E00E61A1C /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
+		3B71B2E11FA9C8BA0002D17C /* LiveInviteInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LiveInviteInfo.m; sourceTree = "<group>"; };
+		3B71B2E21FA9C8BA0002D17C /* LiveInviteInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiveInviteInfo.h; sourceTree = "<group>"; };
+		3B71B2E41FA9EDF90002D17C /* chatView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = chatView.m; sourceTree = "<group>"; };
+		3B71B2E51FA9EDFA0002D17C /* chatView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = chatView.h; sourceTree = "<group>"; };
 		3BAC8A5F1FA6CB4600B95A60 /* UIView+Frame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+Frame.h"; sourceTree = "<group>"; };
 		3BAC8A601FA6CB4600B95A60 /* UIView+Frame.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+Frame.m"; sourceTree = "<group>"; };
 		3BAC8A651FA7015100B95A60 /* LiveListCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LiveListCell.h; sourceTree = "<group>"; };
@@ -405,6 +411,8 @@
 				3B0A7F061FA18B6800BE0214 /* MNSInfoModel.m */,
 				3B0A7F0F1FA1D98D00BE0214 /* UserInfo.h */,
 				3B0A7F101FA1D98D00BE0214 /* UserInfo.m */,
+				3B71B2E21FA9C8BA0002D17C /* LiveInviteInfo.h */,
+				3B71B2E11FA9C8BA0002D17C /* LiveInviteInfo.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -482,6 +490,8 @@
 		3BE784A31FA45A0000203412 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				3B71B2E51FA9EDFA0002D17C /* chatView.h */,
+				3B71B2E41FA9EDF90002D17C /* chatView.m */,
 				3BAC8A7C1FA8738C00B95A60 /* AlivcLiveSpotView.h */,
 				3BAC8A7B1FA8738C00B95A60 /* AlivcLiveSpotView.m */,
 				3BE784A41FA45E1900203412 /* StartLiveView.h */,
@@ -696,6 +706,7 @@
 				3B0A7F011FA188CC00BE0214 /* AlivcRootJSONModel.m in Sources */,
 				3B0A7F0B1FA190C000BE0214 /* AlivcLiveAlertView.m in Sources */,
 				3B0A7EF21FA08D1100BE0214 /* JSONHTTPClient.m in Sources */,
+				3B71B2E31FA9C8BA0002D17C /* LiveInviteInfo.m in Sources */,
 				3B0A7EF11FA08D1100BE0214 /* JSONAPI.m in Sources */,
 				3B0A7F0E1FA1C6C700BE0214 /* LoginViewController.m in Sources */,
 				3B65B9811FA06D1C00E61A1C /* AFURLSessionManager.m in Sources */,
@@ -714,6 +725,7 @@
 				3BAC8A801FA8779200B95A60 /* RecieveMessageManager.m in Sources */,
 				3B0A7F071FA18B6800BE0214 /* MNSInfoModel.m in Sources */,
 				3B0A7EF51FA08D1100BE0214 /* JSONValueTransformer.m in Sources */,
+				3B71B2E61FA9EDFA0002D17C /* chatView.m in Sources */,
 				3B0A7EF41FA08D1100BE0214 /* JSONKeyMapper.m in Sources */,
 				3B0A7EFA1FA1873400BE0214 /* SendMessageManager.m in Sources */,
 				3B65B97F1FA06D1C00E61A1C /* AFURLRequestSerialization.m in Sources */,

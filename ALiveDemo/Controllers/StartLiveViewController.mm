@@ -14,7 +14,16 @@
 #import "SVProgressHUD.h"
 #import "StartLiveView.h"
 #import "AlivcLiveSpotView.h"
+#import "LiveInviteInfo.h"
 
+// 直播状态
+typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
+    ALIVC_START_LIVE_STATUS_NONE = 0,               // 无
+    ALIVC_START_LIVE_STATUS_LIVING = 1,             // 直播中 (无人连麦)
+    ALIVC_START_LIVE_STATUS_CALLING = 2,            // 连麦连接中
+    ALIVC_START_LIVE_STATUS_CHATTING = 3,           // 连麦中 1名
+    ALIVC_START_LIVE_STATUS_CHATTING_CLOSING = 4,   // 结束连麦中
+};
 @interface StartLiveViewController ()<AlivcLiveAlertViewDelegate,StartLiveViewDelegate,RecieveMessageDelegate>
 
 // 连麦SDK相关
@@ -25,14 +34,18 @@
 @property (nonatomic, strong) MNSInfoModel *mnsModel;
 
 // 连麦管理
+@property (nonatomic, assign) ALIVC_START_LIVE_STATUS liveStatus;
 @property (nonatomic, strong) NSString *rtmpURLString;
+@property (nonatomic, strong) NSMutableArray<LiveInviteInfo *> *currentInviterArray; // 当前连麦的全部uid
 @property (nonatomic, strong) NSString *roomId;
 
 // UI
 @property (nonatomic, strong) StartLiveView *startLiveView;
 
-// 接收消息接收器
+// 消息接收器
 @property (nonatomic, strong) RecieveMessageManager *recieveMessageManager;
+
+@property (nonatomic, strong) NSMutableArray *inviterAudienceList; // 主播同意列表
 
 @end
 
@@ -61,6 +74,8 @@
     self.recieveMessageManager = [[RecieveMessageManager alloc] init];
     self.recieveMessageManager.delegate = self;
     self.publisherVideoCall = [[AlivcVideoChatHost alloc] init];
+    self.currentInviterArray = [NSMutableArray array];
+    self.inviterAudienceList = [NSMutableArray array];
     
     int width = 540;
     int height = 960;
@@ -94,7 +109,7 @@
     [self sendCreateLiveRequest];
 }
 
-#pragma mark - ======== 请求 ========
+#pragma mark - ======== 请求(直播相关) ========
 /**
  创建直播请求
  */
@@ -165,6 +180,21 @@
     }];
 }
 
+#pragma mark - ======== 请求(连麦相关) ========
+/**
+ *  发送获取连麦消息(发送是否同意连麦)
+ */
+- (void)sendInviteVideoCallFeedbackRequestWithUid:(NSString *)inviterUid status:(int)status inviterType:(int)inviterType
+{
+    [SendMessageManager sendVideoCallFeedBack:inviterUid inviteeUid:self.uid status:status inviterType:inviterType inviteeType:2 block:^(NSURL *mainPlayUrl, NSArray<NSURL *> *playUrls, NSArray<NSString *> *playUids, NSString *rtmpUrl, NSError *error) {
+        
+        if (error) {
+            [self showAlertViewWithMessage:[NSString stringWithFormat:@"连麦反馈请求失败%ld", (long)error.code]];
+            return ;
+        }
+    }];
+}
+
 #pragma mark - StartLiveViewDelegate
 - (void)quitLiveAction
 {
@@ -196,19 +226,6 @@
     [sender setSelected:!sender.selected];
 }
 
-#pragma mark - AlertView
-- (void)showAlertViewWithMessage:(NSString *)message
-{
-    AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"提示" icon:nil message:message delegate:self buttonTitles:@"OK", nil];
-    [alert showInView:self.view];
-}
-
-#pragma mark - AlivcLiveAlertViewDelegate
-- (void)alertView:(AlivcLiveAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-
-}
-
 #pragma mark - ======== Action ========
 - (void)finishLive
 {
@@ -219,7 +236,53 @@
     }
 }
 
-#pragma mark - RecieveMessageDelegate
+#pragma mark - ======== RecieveMessageDelegate (接收消息代理) ========
+// 接收到连麦请求
+- (void)onGetInviteMessage:(NSString *)inviterUid inviterName:(NSString *)inviterName inviterType:(int)inviterType
+{
+    //todo: 未判断已经连麦的人数，超过3人则返回
+    if (inviterType == 2) {
+        NSLog(@"主播不能和主播进行连麦");
+        return;
+    }
+    for (LiveInviteInfo* info in self.currentInviterArray) {
+        if ([info.uid isEqualToString:inviterUid]) {
+            NSLog(@"改用户已经在连麦中");
+            return;
+        }
+    }
+    self.liveStatus = ALIVC_START_LIVE_STATUS_CALLING;
+    [self.inviterAudienceList addObject:inviterUid];
+    //弹出是否同意的对话框
+    AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"收到连麦请求" icon:nil message:inviterUid delegate:self buttonTitles:@"拒绝连麦", @"同意连麦",nil];
+    alert.tag = ALIVC_START_ALERT_TAG_VIDEOCALL_INVITE;
+    [alert showInView:self.startLiveView];
+}
+
+#pragma mark - AlertView
+- (void)showAlertViewWithMessage:(NSString *)message
+{
+    AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"提示" icon:nil message:message delegate:self buttonTitles:@"OK", nil];
+    [alert showInView:self.view];
+}
+
+#pragma mark - AlivcLiveAlertViewDelegate
+- (void)alertView:(AlivcLiveAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (alertView.tag == ALIVC_START_ALERT_TAG_VIDEOCALL_INVITE) {
+        NSString* inviterUid = alertView.message;
+        
+        if (buttonIndex == 0) {
+            // 不同意连麦
+            [self sendInviteVideoCallFeedbackRequestWithUid:inviterUid status:2 inviterType:1];
+        }
+        if (buttonIndex == 1) {
+            // 同意连麦
+            [self sendInviteVideoCallFeedbackRequestWithUid:inviterUid status:1 inviterType:1];
+        }
+    }
+}
+
 // 接收到的点赞
 - (void)onGetLikeMessage:(NSString *)uid name:(NSString *)name
 {

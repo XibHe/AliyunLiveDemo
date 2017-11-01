@@ -10,20 +10,37 @@
 #import <AlivcVideoChat/AlivcVideoChat.h>
 #import "AlivcLiveAlertView.h"
 #import "SendMessageManager.h"
+#import "RecieveMessageManager.h"
 #import "LiveRoomView.h"
 #import "AlivcLiveSpotView.h"
+#import "LiveInviteInfo.h"
 
-@interface LiveRoomViewController ()<AlivcLiveAlertViewDelegate,LiveRoomViewDelegate>
+// 直播状态
+typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
+    ALIVC_LIVE_ROOM_STATUS_NONE = 0,                // 无
+    ALIVC_LIVE_ROOM_STATUS_WATCHING = 1,            // 观看直播
+    ALIVC_LIVE_ROOM_STATUS_CALLING = 2,             // 准备连麦中
+    ALIVC_LIVE_ROOM_STATUS_CHATTING = 3,            // 连麦中
+    ALIVC_LIVE_ROOM_STATUS_CHATING_CLOSING = 4,     // 结束连麦中
+};
+
+@interface LiveRoomViewController ()<AlivcLiveAlertViewDelegate,LiveRoomViewDelegate,RecieveMessageDelegate>
 
 // SDK
-@property (nonatomic, strong) NSMutableDictionary *playerParam;         // 参数
+@property (nonatomic, strong) NSMutableDictionary *playerParam;         // 播放器参数
+@property (nonatomic, strong) NSMutableDictionary *publisherParam;      // 推流参数
 @property (nonatomic, strong) AlivcVideoChatParter *mediaPlayerCall;    // 观众端
+@property (nonatomic, strong) NSString *mainUid;
 
 // 直播间聊天室SDK(AlivcLiveChatRoom.framework)相关
 @property (nonatomic, strong) MNSInfoModel *mnsModel;
 
 // UI
 @property (nonatomic, strong) LiveRoomView *liveRoomView;
+
+@property (nonatomic, assign) ALIVC_LIVE_ROOM_STATUS liveStatus;
+@property (nonatomic, strong) NSMutableArray<LiveInviteInfo*> *invitePlayUrlArray;
+@property (nonatomic, strong) RecieveMessageManager *mRecieveManager;
 
 @end
 
@@ -51,12 +68,14 @@
     if(self.playUrl.length == 0) {
         AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"提示" icon:nil message:@"直播间暂无直播" delegate:nil buttonTitles:@"OK",nil];
         [alert showInView:self.liveRoomView];
-        
         return;
     }
-    
+    self.mRecieveManager = [[RecieveMessageManager alloc] init];
+    self.mRecieveManager.delegate = self;
     // 初始化参数
     self.mediaPlayerCall = [[AlivcVideoChatParter alloc] init];
+    self.liveStatus = ALIVC_LIVE_ROOM_STATUS_WATCHING;
+    self.invitePlayUrlArray = [NSMutableArray array];
     // 添加通知
     [self addVideoChatObserver];
     
@@ -78,13 +97,75 @@
 //        NSTimer *timer = [NSTimer timerWithTimeInterval:1 target:self selector:@selector(updateInfo) userInfo:nil repeats:YES];
 //        [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSDefaultRunLoopMode];
     }
-    
+    self.liveStatus = ALIVC_LIVE_ROOM_STATUS_WATCHING;
     // 关闭自动锁屏
     [UIApplication sharedApplication].idleTimerDisabled = YES;
     [self sendJoinLiveRequest];
 }
 
-#pragma mark - ======== 请求 ========
+/**
+ *  开始连麦
+ */
+- (void)createLiveCallWithPushUrl:(NSString *)pushUrl hostPlayUrl:(NSURL *)hostPlayUrl otherPlayUrls:(NSArray<NSURL *> *)otherPlayUrlArray otherPlayUids:(NSArray<NSString*> *)otherPlayUidArray
+{
+    // 开始连麦
+    if (!self.mediaPlayerCall) {
+        return;
+    }
+    
+    int width = 180;
+    int height = 320;
+    
+    self.publisherParam = [[NSMutableDictionary alloc] init];
+    NSNumber* frontCamera = [[NSNumber alloc] initWithBool:YES];
+    NSNumber* audioSampleRate = [[NSNumber alloc] initWithInt:32000];
+    NSNumber* uploadTimeout = [[NSNumber alloc] initWithInt:5000];
+    NSNumber* maxBitRate = [[NSNumber alloc] initWithInt:800];
+    
+    [self.publisherParam setObject:maxBitRate forKey:ALIVC_PUBLISHER_PARAM_MAXBITRATE];
+    [self.publisherParam setObject:uploadTimeout forKey:ALIVC_PUBLISHER_PARAM_UPLOADTIMEOUT];
+    [self.publisherParam setObject:audioSampleRate forKey:ALIVC_PUBLISHER_PARAM_AUDIOSAMPLERATE];
+    [self.publisherParam setObject:frontCamera forKey:ALIVC_PUBLISHER_PARAM_FRONTCAMERAMIRROR];
+    
+    //设置推流最小码率
+    NSNumber* minBitRate = [[NSNumber alloc] initWithInt:200];
+    [self.publisherParam setObject:minBitRate forKey:ALIVC_PUBLISHER_PARAM_MINBITRATE];
+    
+    //设置推流初始码率
+    NSNumber* originalBitRate = [[NSNumber alloc] initWithInt:400];
+    [self.publisherParam setObject:originalBitRate forKey:ALIVC_PUBLISHER_PARAM_ORIGINALBITRATE];
+    
+    //设置是横屏推流还是竖屏推流
+    NSNumber* landscape = [[NSNumber alloc] initWithInt:NO];
+    [self.publisherParam setObject:landscape forKey:ALIVC_PUBLISHER_PARAM_LANDSCAPE];
+    
+    //设置推流是前置摄像头还是后置摄像头
+    NSNumber* cameraPosition = [[NSNumber alloc] initWithInt:cameraPositionFront];
+    [self.publisherParam setObject:cameraPosition forKey:ALIVC_PUBLISHER_PARAM_CAMERAPOSITION];
+    
+    [self.liveRoomView addSubview:self.liveRoomView.pushView];
+    
+    NSArray *playerViews = [self.liveRoomView addChatViewsWithArray:otherPlayUrlArray uidArrays:otherPlayUidArray];
+    
+    int ret = [self.mediaPlayerCall onlineChats:pushUrl width:width height:height preview:self.liveRoomView.pushView.chatView publisherParam:self.publisherParam hostPlayUrl:hostPlayUrl playerUrls:otherPlayUrlArray playerViews:playerViews];
+    
+    if (ret != 0) {
+        [self.liveRoomView removeAllChatViews];
+        [self.liveRoomView.pushView removeFromSuperview];
+        [self.mediaPlayerCall offlineChat];
+        [self showAlertViewWithMessage:[NSString stringWithFormat:@"连麦失败,ret=%d", ret]];
+        return;
+    }
+    
+    NSLog(@"观众SDK开始连麦 %d", ret);
+    self.playNotMixUrl = [hostPlayUrl absoluteString];
+//    [self.liveRoomView addSubview:self.liveRoomView.skinButton];
+//    [self.liveRoomView addSubview:self.liveRoomView.toggleButton];
+    
+    self.liveStatus = ALIVC_LIVE_ROOM_STATUS_CHATTING;
+}
+
+#pragma mark - ======== 请求(直播间相关) ========
 /**
  发送加入直播请求
  */
@@ -158,7 +239,41 @@
     }];
 }
 
+#pragma mark - ======== 请求(连麦相关) ========
+/**
+ *  发送连麦请求
+ */
+- (void)sendInviteVideoCallRequest
+{
+    NSArray* inviteeUids = [[NSArray alloc] initWithObjects:self.hostUid, nil];
+    [SendMessageManager inviteVideoCall:self.roomId inviterUid:self.userUid inviteeUids:inviteeUids inviterType:1 block:^(NSError *error) {
+        if (error) {
+            [self showAlertViewWithMessage:[NSString stringWithFormat:@"发起连麦请求error:%ld", (long)error.code]];
+            return ;
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self showAlertViewWithMessage:@"连麦请求发送成功"];
+        });
+        
+        self.liveStatus = ALIVC_LIVE_ROOM_STATUS_CALLING;
+    }];
+}
+
+/**
+ *  发送结束连麦请求
+ */
+- (void)sendLeaveVideoCallRequest
+{
+    [SendMessageManager leaveVideoCall:self.roomId uid:self.userUid block:^(NSError *error) {
+        if (error) {
+            [self showAlertViewWithMessage:[NSString stringWithFormat:@"离开连麦请求失败error:%ld", (long)error.code]];
+            return ;
+        }
+    }];
+}
+
 #pragma mark - LiveRoomViewDelegate
+// 退出聊天室
 - (void)quitLiveAction
 {
     // 如果有连麦，则需关闭连麦
@@ -176,7 +291,24 @@
     [self dismissViewControllerAnimated:YES completion:nil];
     [UIApplication sharedApplication].idleTimerDisabled = NO;
 }
-
+// 连麦
+- (void)connectAction:(UIButton *)sender
+{
+    if (sender.selected) {
+        // 发送结束连麦请求
+        [self sendLeaveVideoCallRequest];
+        // 断开连麦
+        [self closeLiveCall];
+    } else {
+        // 已经请求连麦中，或正在连麦中，则不进行连麦
+        if (self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CALLING || self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CHATTING) {
+            return;
+        }
+        // 发送开始连麦请求
+        [self sendInviteVideoCallRequest];
+    }
+}
+// 点赞
 - (void)likeLiveAction
 {
     AlivcLiveSpotView* spot = [[AlivcLiveSpotView alloc] initWithFrame:CGRectMake(0, 0, 36, 36)];
@@ -187,12 +319,12 @@
 
     [self sendSpotRequest];
 }
-
+// 切换前后摄像头
 - (void)switchCameraAction
 {
     [self.mediaPlayerCall switchCamera];
 }
-
+// 美颜
 - (void)beautyAction:(UIButton *)sender
 {
     NSNumber* number = [[NSNumber alloc] initWithBool:sender.selected];
@@ -200,6 +332,23 @@
     NSDictionary* dic = [[NSDictionary alloc] initWithObjectsAndKeys:number, key,nil];
     [self.mediaPlayerCall setFilterParam:dic];
     [sender setSelected:!sender.selected];
+}
+
+#pragma mark - ======== RecieveMessageDelegate (接收消息代理) ========
+// 主动发起连麦，收到对方同意连麦消息
+- (void)onGetInviteAgreeMessage:(NSString *)inviteeUid inviteeName:(NSString *)inviteeName inviteeRoomId:(NSString *)inviteeRoomId inviterRoomId:(NSString *)inviterRoomId mainPlayUrl:(NSURL *)mainPlayUrl rtmpUrl:(NSString *)rtmpUrl otherPlayUrls:(NSArray *)otherPlayUrls otherPlayUids:(NSArray *)otherPlayUids
+{
+    self.mainUid = inviteeUid;
+    [self createLiveCallWithPushUrl:rtmpUrl hostPlayUrl:mainPlayUrl otherPlayUrls:otherPlayUrls otherPlayUids:otherPlayUids];
+    
+    for (int i=0; i<[otherPlayUids count]; i++) {
+        NSString* uid = [otherPlayUids objectAtIndex:i];
+        NSString* url = [[otherPlayUrls objectAtIndex:i] absoluteString];
+        LiveInviteInfo *info = [[LiveInviteInfo alloc] init];
+        info.uid = uid;
+        info.playUrl = url;
+        [self.invitePlayUrlArray addObject:info];
+    }
 }
 
 #pragma mark - AlertView
@@ -251,6 +400,16 @@
         [self.mediaPlayerCall stopPlaying];
     }
     self.mediaPlayerCall = nil;
+    self.liveStatus = ALIVC_LIVE_ROOM_STATUS_NONE;
+}
+/**
+ 结束连麦
+ */
+- (void)closeLiveCall
+{
+    if (!self.mediaPlayerCall) {
+        return;
+    }
 }
 
 #pragma mark - NSNotification

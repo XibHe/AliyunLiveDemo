@@ -72,4 +72,27 @@
  */
 + (void)quitChatRoomSuccess:(void (^)(void))successBlock error:(void (^)(NSError *error))errorBlock;
 
+
+#pragma mark - ======== 连麦相关 ========
+
+/**
+ 发起连麦请求
+ */
++ (void)inviteVideoCall:(NSString*)roomId inviterUid:(NSString*)inviterUid inviteeUids:(NSArray<NSString*>*)inviteeUids inviterType:(int)inviterType block:(void (^)(NSError *error))block;
+
+/**
+ 发起结束连麦请求
+ */
++ (void)leaveVideoCall:(NSString*)roomId uid:(NSString*)uid block:(void (^)(NSError *error))block;
+
+/**
+ 发送获取连麦消息
+ @param inviterUid 邀请连麦ID
+ @param inviteeUid 被邀请连麦ID
+ @param status 是否同意状态 #1同意 2 不同意
+ @param inviterType 邀请是否为观众 #1是观众 2 主播
+ @param inviteeType 被邀请是否为观众 #1是观众 2 主播
+ */
++(void)sendVideoCallFeedBack:(NSString*)inviterUid inviteeUid:(NSString*)inviteeUid status:(int)status inviterType:(int)inviterType inviteeType:(int)inviteeType block:(void (^)(NSURL* mainPlayUrl,NSArray<NSURL*>* playUrls,NSArray<NSString*>* Uids,NSString* rtmpUrl,NSError *error))block;
+
 @end

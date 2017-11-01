@@ -7,18 +7,32 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "chatView.h"
 
 @class LiveRoomView;
 @protocol LiveRoomViewDelegate <NSObject>
 - (void)quitLiveAction;
+- (void)connectAction:(UIButton *)sender;
 - (void)likeLiveAction;
 - (void)switchCameraAction;
 - (void)beautyAction:(UIButton *)sender;
 @end
 
-@interface LiveRoomView : UIView
+@interface LiveRoomView : UIView<ChatViewCloseDelegate>
 
 @property (nonatomic, strong) UIView *mediaPalyerView;    // 直播播放视图
 @property (nonatomic, assign) id <LiveRoomViewDelegate> delegate;
+@property (nonatomic, strong) ChatView *pushView;
+
+
+/**
+ 添加多个连麦对话框
+ */
+- (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uidArrays:(NSArray*)uidsArray;
+
+/**
+ 移除所有连麦对话框
+ */
+- (void)removeAllChatViews;
 @end
 

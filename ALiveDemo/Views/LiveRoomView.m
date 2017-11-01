@@ -12,6 +12,7 @@
 @property (nonatomic, strong) UIButton *quitLiveBtn;      // 退出直播按钮
 @property (nonatomic, strong) UIButton *nickBtn;          // 用户个人信息
 @property (nonatomic, strong) UILabel *nameLabel;         // 用户昵称
+@property (nonatomic, strong) NSMutableArray<NSDictionary*> *viewMapArray;
 @end
 
 @implementation LiveRoomView
@@ -27,6 +28,8 @@
 
 - (void)setupSubViews
 {
+    self.viewMapArray = [NSMutableArray array];
+    
     self.mediaPalyerView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.mediaPalyerView.backgroundColor = [UIColor whiteColor];
     [self addSubview:self.mediaPalyerView];
@@ -87,8 +90,69 @@
     [beautyBtn setBackgroundImage:[UIImage imageNamed:@"beauty"] forState:UIControlStateNormal];
     [beautyBtn addTarget:self action:@selector(beautyBtnClick:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:beautyBtn];
+    
+    // 连麦视图显示框
+    self.pushView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:0]];
+    self.pushView.delegate = self;
+    self.pushView.closeBtn.hidden = YES;
 }
 
+- (CGRect)getChatViewFrameWithIndex:(NSInteger)index {
+    
+    CGRect rect = CGRectZero;
+    //    rect.origin.y = kAlivcLiveScreenHeight-192;
+    //    rect.origin.x = kAlivcLiveScreenWidth - 110 * (index+2);
+    rect.origin.y = ScreenHeight - 80 - 144 * (index+1) - 15 * (index+0);
+    rect.origin.x = ScreenWidth - 85;
+    rect.size = CGSizeMake(81, 144);
+    
+    return rect;
+}
+
+#pragma amrk - ChatViewCloseDelegate
+- (void)onClickChatViewCloseButtonWithView:(UIView *)view
+{
+    
+}
+
+- (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uidArrays:(NSArray*)uidsArray
+{
+    NSInteger currentChatCount = self.viewMapArray.count;
+    if (currentChatCount >= 3) {
+        // 如果连麦已经有三个 则返回空 不继续添加连麦窗口
+        return nil;
+    }
+    NSMutableArray *viewArray = [NSMutableArray array];
+    
+    int count = (int)[playArray count];
+    for (int index = 0; index < count; index++) {
+        
+        ChatView *chatView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:index + currentChatCount + 1] ];
+        chatView.chatView.tag = 998877 + index;
+        chatView.nameLabel.text = [uidsArray objectAtIndex:index];
+        chatView.closeBtn.hidden = YES;
+        chatView.delegate = self;
+        
+        [self addSubview:chatView];
+        [viewArray addObject:chatView.chatView];
+        
+        NSMutableDictionary* dic = [[NSMutableDictionary alloc] init];
+        [dic setObject:chatView forKey:[playArray objectAtIndex:index]];
+        [self.viewMapArray addObject:dic];
+    }
+    return viewArray;
+}
+
+- (void)removeAllChatViews
+{
+    for (NSDictionary* dic in self.viewMapArray) {
+        UIView* view = [[dic allValues] objectAtIndex:0];
+        [view removeFromSuperview];
+    }
+    [self.viewMapArray removeAllObjects];
+}
+
+#pragma mark - ButtonAction
 - (void)quitLiveBtnClick:(UIButton *)sender
 {
     if (self.delegate && [self.delegate respondsToSelector:@selector(quitLiveAction)]) {
@@ -98,7 +162,9 @@
 
 - (void)disconnectBtnClick:(UIButton *)sender
 {
-    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(connectAction:)]) {
+        [self.delegate connectAction:sender];
+    }
 }
 
 - (void)likeBtnClick:(UIButton *)sender

@@ -193,4 +193,84 @@
             errorBlock(error);
     }];
 }
+
+#pragma mark - ======== 连麦相关 ========
+
+/**
+ 发起连麦请求
+ */
++ (void)inviteVideoCall:(NSString*)roomId inviterUid:(NSString*)inviterUid inviteeUids:(NSArray<NSString*>*)inviteeUids inviterType:(int)inviterType block:(void (^)(NSError *error))block
+{
+    NSMutableString* inviteeUid = [[NSMutableString alloc] init];
+    int count = (int)[inviteeUids count];
+    int index = 0;
+    for (NSString* uid in inviteeUids) {
+        [inviteeUid appendString:uid];
+        index++;
+        if (index < count) {
+            [inviteeUid appendString:@"|"];
+        }
+    }
+    
+    NSDictionary *param = @{@"inviterUid":inviterUid,
+                            @"inviteeUids":inviteeUid,
+                            @"liveRoomId":roomId,
+                            @"inviterType":@(inviterType)};
+    
+    [[AlivcRequestManager manager] requestWithHost:@"videocall/invite" param:param block:^(NSDictionary *response, NSError *error) {
+        
+        if(block)
+            block(error);
+        
+    }];
+}
+/**
+ 发起结束连麦请求
+ */
++ (void)leaveVideoCall:(NSString*)roomId uid:(NSString*)uid block:(void (^)(NSError *error))block
+{
+    NSDictionary *param = @{@"roomId":roomId,
+                            @"uid":uid};
+    [[AlivcRequestManager manager] requestWithHost:@"videocall/leave" param:param block:^(NSDictionary *response, NSError *error) {
+        if (block) {
+            block(error);
+        }
+    }];
+}
+
+/**
+ 发送获取连麦消息
+ */
++(void)sendVideoCallFeedBack:(NSString*)inviterUid inviteeUid:(NSString*)inviteeUid status:(int)status inviterType:(int)inviterType inviteeType:(int)inviteeType block:(void (^)(NSURL* mainPlayUrl,NSArray<NSURL*>* playUrls,NSArray<NSString*>* Uids,NSString* rtmpUrl,NSError *error))block
+{
+    NSDictionary *param = @{@"inviterUid":inviterUid,
+                            @"inviteeUid":inviteeUid,
+                            @"status":@(status),
+                            @"inviterType":@(inviterType),
+                            @"inviteeType":@(inviteeType)};
+    
+    [[AlivcRequestManager manager] requestWithHost:@"videocall/feedback" param:param block:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            if(block)
+                block(nil,nil,nil,nil,error);
+            return ;
+        }
+        
+        NSURL *mainPlayUrl = [NSURL URLWithString:response[@"mainPlayUrl"]];
+        NSArray *otherPlayUrlArray = response[@"playUrls"];
+        NSMutableArray* otherPlayUrls = [[NSMutableArray alloc] init];
+        NSMutableArray* otherPlayUids = [[NSMutableArray alloc] init];
+        for (NSDictionary* dic in otherPlayUrlArray) {
+            NSString* uid = dic[@"uid"];
+            NSString* strUid = [NSString stringWithFormat:@"%d",[uid intValue]];
+            [otherPlayUids addObject:strUid];
+            [otherPlayUrls addObject:[NSURL URLWithString:dic[@"url"]]];
+        }
+        NSString *pushUrl = response[@"rtmpUrl"];
+        if (block) {
+            block(mainPlayUrl,otherPlayUrls,otherPlayUids,pushUrl,error);
+        }
+    }];
+}
+
 @end

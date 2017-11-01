@@ -2,6 +2,8 @@
 //  StartLiveViewController.h
 //  ALiveDemo
 //
+//  发起直播
+//
 //  Created by zyjk_iMac-penghe on 2017/10/25.
 //  Copyright © 2017年 zyjk_iMac-penghe. All rights reserved.
 //

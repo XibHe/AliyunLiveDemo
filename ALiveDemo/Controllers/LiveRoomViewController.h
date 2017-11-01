@@ -18,4 +18,6 @@
 @property (nonatomic, copy) NSString *hostUid;
 @property (nonatomic, copy) NSString *liveName;
 
+@property (nonatomic, strong) NSString *playNotMixUrl;
+
 @end
