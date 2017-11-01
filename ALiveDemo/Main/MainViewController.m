@@ -12,6 +12,7 @@
 #import "LiveListCell.h"
 #import "AlivcLiveAlertView.h"
 #import "LiveRoomViewController.h"
+#import "MJRefresh.h"
 
 static NSString *listCellIndentify = @"listCell";
 
@@ -46,6 +47,11 @@ static NSString *listCellIndentify = @"listCell";
     self.listTableView.dataSource = self;
     [self.view addSubview:self.listTableView];
     
+    __weak typeof(self) weakSelf = self;
+    self.listTableView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
+        [weakSelf requestList];
+    }];
+    
     UIButton *liveButton = [UIButton buttonWithType:(UIButtonTypeCustom)];
     liveButton.frame = CGRectMake((ScreenWidth - 56) / 2, (ScreenHeight - 80), 56, 56);
     [liveButton setBackgroundImage:[UIImage imageNamed:@"create"] forState:(UIControlStateNormal)];
@@ -57,6 +63,8 @@ static NSString *listCellIndentify = @"listCell";
 - (void)requestList
 {
     [SendMessageManager getAppLiveList:^(NSMutableArray<RoomInfoModel *> *roomInfos, NSError *error) {
+        [self.listTableView.mj_header endRefreshing];
+        
         if (error) {
             NSLog(@"播放列表获取失败:%@", error);
             return ;
@@ -64,7 +72,7 @@ static NSString *listCellIndentify = @"listCell";
         [self.listDataArray removeAllObjects];
         
         for (RoomInfoModel* model in roomInfos) {
-            if ([model.name rangeOfString:@"Lonch_"].location != NSNotFound) {
+            if ([model.name rangeOfString:@"Test_"].location != NSNotFound) {
                 [self.listDataArray addObject:model];
             }
         }
