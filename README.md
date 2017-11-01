@@ -1,23 +1,24 @@
 # AliyunLiveDemo
 记录对接阿里云直播SDK的过程
 
-推流SDK   ———> AlivcLiveVideo.framework
-连麦SDK   ———> AlivcLibRtmp.framework , AlivcVideoChat.framework
-直播间SDK ———> AlivcLiveChatRoom.framework
+* 推流SDK   ———> AlivcLiveVideo.framework
+* 连麦SDK   ———> AlivcLibRtmp.framework , AlivcVideoChat.framework
+* 直播间SDK ———> AlivcLiveChatRoom.framework
 
 # 接入Demo时遇到的问题
 
-1.  Enable Bitcode    设置为NO,  AlivcVideoChat.framework 不支持。
+1.  Enable Bitcode 设置为NO,  AlivcVideoChat.framework 不支持。
 2. Xcode 解决日志打印不全问题,
 
 新增一个输出宏，
 
-```
+```objectivec
 #ifdef DEBUG
 #define NSLog( s, ... ) printf("class: <%p %s:(%d) > method: %s \n%s\n", self, [[[NSString stringWithUTF8String:__FILE__] lastPathComponent] UTF8String], __LINE__, __PRETTY_FUNCTION__, [[NSString stringWithFormat:(s), ##__VA_ARGS__] UTF8String] );
 #else
 #define NSLog( s, ... )
 #endif
+
 ```
 
 3.  xcode9 pch
@@ -37,7 +38,7 @@
 
 5. 加载预览视频的问题
 
-```
+```objectivec
 - (void)loadView;
 
 ```
@@ -63,4 +64,27 @@ https://segmentfault.com/q/1010000000586639
 
 8. 很重要，决定了直播列表中是否存在正在直播的房间。
 
+```
+[self.publisherVideoCall startToPublish:self.rtmpURLString];
+
+```
+
+9. 很严重的一个问题
+
 接入直播间(LiveRoomViewController)后，点击直播列表进入直播间后，再返回直播列表，会出现一个uid一样的重复直播数据。(eg. uid = 2867;) 并且在进入直播间时，未弹出直播中断的对话框。
+
+返回的mns对象：
+
+```
+ mns = {
+                roomTag = de857116795d;
+                subscriptionName = de857116795d;
+                topic = de857116795d;
+                topicLocation = "http://125277.mns.cn-shanghai.aliyuncs.com/topics/de857116795d";
+                userRoomTag = 1982;
+       };
+```
+
+其中，userRoomTag与uid一致。
+
+原因:  直播间(LiveRoomViewController)，在退出直播间时，未通知服务器，未关闭播放器；推流(StartLiveViewController)，在结束推流时，未发送退出直播请求，未完全关闭直播。
