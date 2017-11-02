@@ -102,6 +102,7 @@
         chatView.chatView.tag = 998877 + index;
         chatView.nameLabel.text = [uids objectAtIndex:index];
         chatView.delegate = self;
+        chatView.closeBtn.hidden = YES;
         [self addSubview:chatView];
         [viewArray addObject:chatView.chatView];
         
