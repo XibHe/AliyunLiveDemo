@@ -88,6 +88,19 @@
             }
         }
             break;
+        case 9:
+        {
+            NSString *roomId = [dic[@"data"] objectForKey:@"roomId"];
+            NSNumber *uid = [dic[@"data"] objectForKey:@"uid"];
+            NSString *strUid = [NSString stringWithFormat:@"%d",[uid intValue]];
+            NSString *name = [dic[@"data"] objectForKey:@"name"];
+            NSString *playUrl = [dic[@"data"] objectForKey:@"playUrl"];
+            // 开始推流
+            if (self.delegate && [self.delegate respondsToSelector:@selector(onGetStartLiveMessage:uid:name:playUrl:)]) {
+                [self.delegate onGetStartLiveMessage:roomId uid:strUid name:name playUrl:playUrl];
+            }
+        }
+            break;
             
         default:
             break;

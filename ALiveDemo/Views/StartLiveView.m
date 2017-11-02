@@ -8,10 +8,11 @@
 
 #import "StartLiveView.h"
 
-@interface StartLiveView()
+@interface StartLiveView()<ChatViewCloseDelegate>
 @property (nonatomic, strong) UIButton *quitLiveBtn;      // 退出直播按钮
 @property (nonatomic, strong) UIButton *nickBtn;          // 用户个人信息
 @property (nonatomic, strong) UILabel *nameLabel;         // 用户昵称
+@property (nonatomic, strong) NSMutableArray<NSDictionary*> *viewMapArray;
 @end
 
 @implementation StartLiveView
@@ -27,6 +28,7 @@
 
 - (void)setupSubViews
 {
+    self.viewMapArray = [NSMutableArray array];
     self.publisherView = [[UIView alloc] init];
     self.publisherView.frame = [UIScreen mainScreen].bounds;
     [self addSubview:self.publisherView];
@@ -83,6 +85,42 @@
     [self addSubview:beautyBtn];
 }
 
+// 添加连麦窗口
+- (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uids:(NSArray*)uids
+{
+    NSInteger currentChatCount = self.viewMapArray.count;
+    if (currentChatCount >= 3) {
+        // 如果连麦已经有三个 则返回空 不继续添加连麦窗口
+        return nil;
+    }
+    NSMutableArray *viewArray = [NSMutableArray array];
+    
+    int count = (int)[playArray count];
+    for (int index = 0; index < count; index++) {
+        
+        ChatView *chatView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:index + currentChatCount]];
+        chatView.chatView.tag = 998877 + index;
+        chatView.nameLabel.text = [uids objectAtIndex:index];
+        chatView.delegate = self;
+        [self addSubview:chatView];
+        [viewArray addObject:chatView.chatView];
+        
+        NSMutableDictionary* dic = [[NSMutableDictionary alloc] init];
+        [dic setObject:chatView forKey:[playArray objectAtIndex:index]];
+        [self.viewMapArray addObject:dic];
+    }
+    return viewArray;
+}
+
+- (CGRect)getChatViewFrameWithIndex:(NSInteger)index
+{
+    CGRect rect = CGRectZero;
+    rect.origin.y = ScreenHeight - 80 - 144 * (index+1 )- 15 * index;
+    rect.origin.x = ScreenWidth - 85;
+    rect.size = CGSizeMake(81, 144);
+    return rect;
+}
+
 #pragma mark - ======== Action ========
 - (void)quitLiveBtnClick:(UIButton *)sender
 {
@@ -110,4 +148,9 @@
     }
 }
 
+#pragma mark - ChatViewCloseDelegate
+- (void)onClickChatViewCloseButtonWithView:(UIView *)view
+{
+    
+}
 @end

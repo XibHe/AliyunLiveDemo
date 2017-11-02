@@ -27,6 +27,7 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
 @interface StartLiveViewController ()<AlivcLiveAlertViewDelegate,StartLiveViewDelegate,RecieveMessageDelegate>
 
 // 连麦SDK相关
+@property (nonatomic, strong) NSMutableDictionary *playerParam;     // 推流播放器参数
 @property (nonatomic, strong) NSMutableDictionary *publisherParam;
 @property (nonatomic, strong) AlivcVideoChatHost *publisherVideoCall;
 
@@ -34,8 +35,8 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
 @property (nonatomic, strong) MNSInfoModel *mnsModel;
 
 // 连麦管理
-@property (nonatomic, assign) ALIVC_START_LIVE_STATUS liveStatus;
-@property (nonatomic, strong) NSString *rtmpURLString;
+@property (nonatomic, assign) ALIVC_START_LIVE_STATUS liveStatus;                    // 直播状态
+@property (nonatomic, strong) NSString *rtmpURLString;                               // 推流url
 @property (nonatomic, strong) NSMutableArray<LiveInviteInfo *> *currentInviterArray; // 当前连麦的全部uid
 @property (nonatomic, strong) NSString *roomId;
 
@@ -46,7 +47,7 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
 @property (nonatomic, strong) RecieveMessageManager *recieveMessageManager;
 
 @property (nonatomic, strong) NSMutableArray *inviterAudienceList; // 主播同意列表
-
+@property (nonatomic, strong) NSMutableArray *interruptUids;       // 断流列表
 @end
 
 @implementation StartLiveViewController
@@ -76,6 +77,7 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     self.publisherVideoCall = [[AlivcVideoChatHost alloc] init];
     self.currentInviterArray = [NSMutableArray array];
     self.inviterAudienceList = [NSMutableArray array];
+    self.interruptUids = [NSMutableArray array];
     
     int width = 540;
     int height = 960;
@@ -229,11 +231,67 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
 #pragma mark - ======== Action ========
 - (void)finishLive
 {
+    //正在连麦先结束连麦
+    if (self.liveStatus == ALIVC_START_LIVE_STATUS_CHATTING) {
+        [self closeLiveCall];
+    }
     if (self.publisherVideoCall) {
         [self.publisherVideoCall stopPublishing];
         [self.publisherVideoCall finishPublishing];
         self.publisherVideoCall = nil;
     }
+}
+
+/**
+ *  创建连麦，初始化多人连麦播放器
+ */
+- (void)createLiveCallWithInviteePlayUrls:(NSArray<NSURL*> *)inviteePlayUrlArray uids:(NSArray<NSString*> *)inviteePlayUidArray
+{
+    // 连麦
+    self.playerParam = [[NSMutableDictionary alloc] init];
+    
+    //设置播放丢帧的时间阈值，缓冲区超过1s，则进行丢帧
+    NSNumber* dropBufferDuration = [[NSNumber alloc] initWithInt:500];
+    [self.playerParam setObject:dropBufferDuration forKey:ALIVC_PLAYER_PARAM_DROPBUFFERDURATION];
+    
+    //设置播放渲染模式
+    NSNumber* scalingMode = [NSNumber numberWithInt:scalingModeAspectFitWithCropping];
+    [self.playerParam setObject:scalingMode forKey:ALIVC_PLAYER_PARAM_SCALINGMODE];
+    
+    //设置播放下载超时时间
+    NSNumber* downloadTimeout = [[NSNumber alloc] initWithInt:20000];
+    [self.playerParam setObject:downloadTimeout forKey:ALIVC_PLAYER_PARAM_DOWNLOADIMEOUT];
+    
+    [self.publisherVideoCall setPlayerParam:self.playerParam];
+    
+    NSArray *inviteViews = [self.startLiveView addChatViewsWithArray:inviteePlayUrlArray uids:inviteePlayUidArray];
+    
+    int ret = [self.publisherVideoCall launchChats:inviteePlayUrlArray views:inviteViews];
+    if (ret != 0) {
+        [self showAlertViewWithMessage:[NSString stringWithFormat:@"SDK连麦初始化失败,ret=%d", ret]];
+    }
+    self.liveStatus = ALIVC_START_LIVE_STATUS_CHATTING;
+}
+
+/**
+ *  添加连麦
+ */
+- (void)addLiveCallWithPlayUrls:(NSArray<NSURL *> *)playUrlArray uids:(NSArray<NSString*> *)playUidArray
+{
+//    NSArray *inviteViews = [self.startLiveView addChatViewsWithArray:playUrlArray uids:playUidArray];
+//    int ret = [self.publiserVideoCall addChats:playUrlArray views:inviteViews];
+//    if (ret != 0) {
+//        [self showAlertViewWithMessage:@"SDK添加连麦失败"];
+//    }
+//    self.liveStatus = ALIVC_START_LIVE_STATUS_CHATTING;
+}
+
+/**
+ *  结束连麦
+ */
+- (void)closeLiveCall
+{
+  
 }
 
 #pragma mark - ======== RecieveMessageDelegate (接收消息代理) ========
@@ -257,6 +315,76 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"收到连麦请求" icon:nil message:inviterUid delegate:self buttonTitles:@"拒绝连麦", @"同意连麦",nil];
     alert.tag = ALIVC_START_ALERT_TAG_VIDEOCALL_INVITE;
     [alert showInView:self.startLiveView];
+}
+
+//推流消息
+- (void)onGetStartLiveMessage:(NSString *)roomId uid:(NSString *)uid name:(NSString *)name playUrl:(NSString *)playUrl
+{
+    BOOL bFind = NO;
+    for (NSString* interruptId in self.interruptUids) {
+        if ([interruptId isEqualToString:uid]) {
+            bFind = YES;
+            [self.interruptUids removeObject:interruptId];
+            break;
+        }
+    }
+    
+    if ([self.uid isEqualToString:uid] == YES) {
+        return;
+    }
+    
+    bFind = NO;
+    for (NSString* strUid in self.inviterAudienceList) {
+        if ([strUid isEqualToString:uid]) {
+            bFind = YES;
+            break;
+        }
+    }
+    
+    if (bFind == NO){
+        [self showAlertViewWithMessage:@"提示：该推流的用户不在列表中"];
+        return;
+    }
+    
+    //对方已经推流，可以打开对方地址进行播放
+    NSURL* url = [NSURL URLWithString:playUrl];
+    
+    //如果已经存在，则返回，对方有可能重复推流
+    for (LiveInviteInfo* info in self.currentInviterArray) {
+        if ([info.playUrl isEqualToString:playUrl]) {
+            return;
+        }
+    }
+    
+    // 创建连麦，初始化多人连麦播放器
+    if ([self.currentInviterArray count] == 0) {
+        [self createLiveCallWithInviteePlayUrls:@[url] uids:@[uid]];
+    }
+    else {
+    // 继续添加连麦
+        [self addLiveCallWithPlayUrls:@[url] uids:@[uid]];
+    }
+    
+    bFind = NO;
+    for (LiveInviteInfo* info in self.currentInviterArray) {
+        if ([info.uid isEqualToString:uid]) {
+            info.name = name;
+            info.playUrl = playUrl;
+            info.roomId = roomId;
+            bFind = YES;
+            break;
+        }
+    }
+    
+    if (bFind == NO) {
+        LiveInviteInfo* info = [[LiveInviteInfo alloc] init];
+        info.uid = uid;
+        info.name = name;
+        info.playUrl = playUrl;
+        info.roomId = roomId;
+        
+        [self.currentInviterArray addObject:info];
+    }
 }
 
 #pragma mark - AlertView

@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "chatView.h"
 
 @class StartLiveView;
 @protocol StartLiveViewDelegate <NSObject>
@@ -18,4 +19,8 @@
 @interface StartLiveView : UIView
 @property (nonatomic, strong) UIView   *publisherView;    // 直播预览视图
 @property (nonatomic, assign) id <StartLiveViewDelegate> delegate;
+
+// 添加连麦窗口
+- (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uids:(NSArray*)uids;
+
 @end

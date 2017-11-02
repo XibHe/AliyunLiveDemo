@@ -23,6 +23,13 @@
 @optional
 - (void)onGetInviteAgreeMessage:(NSString*)inviteeUid inviteeName:(NSString*)inviteeName inviteeRoomId:(NSString*)inviteeRoomId inviterRoomId:(NSString*)inviterRoomId mainPlayUrl:(NSURL*)mainPlayUrl rtmpUrl:(NSString*)rtmpUrl otherPlayUrls:(NSArray*)otherPlayUrls otherPlayUids:(NSArray*)otherPlayUids;
 
+/**
+ 开始推流
+ */
+@optional
+- (void)onGetStartLiveMessage:(NSString*)roomId uid:(NSString*)uid name:(NSString*)name playUrl:(NSString*)playUrl;
+
+
 // 点赞
 @optional
 - (void)onGetLikeMessage:(NSString*)uid name:(NSString*)name;

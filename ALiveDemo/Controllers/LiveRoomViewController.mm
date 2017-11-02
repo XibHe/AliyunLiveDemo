@@ -159,9 +159,6 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     
     NSLog(@"观众SDK开始连麦 %d", ret);
     self.playNotMixUrl = [hostPlayUrl absoluteString];
-//    [self.liveRoomView addSubview:self.liveRoomView.skinButton];
-//    [self.liveRoomView addSubview:self.liveRoomView.toggleButton];
-    
     self.liveStatus = ALIVC_LIVE_ROOM_STATUS_CHATTING;
 }
 
