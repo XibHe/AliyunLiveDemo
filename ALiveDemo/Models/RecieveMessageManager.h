@@ -2,6 +2,8 @@
 //  RecieveMessageManager.h
 //  ALiveDemo
 //
+//  接收各种与直播相关的消息
+//
 //  Created by zyjk_iMac-penghe on 2017/10/31.
 //  Copyright © 2017年 zyjk_iMac-penghe. All rights reserved.
 //

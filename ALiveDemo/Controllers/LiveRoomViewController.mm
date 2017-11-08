@@ -270,10 +270,16 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
 }
 
 #pragma mark - LiveRoomViewDelegate
-// 退出聊天室
+// 退出直播间
 - (void)quitLiveAction
 {
     // 如果有连麦，则需关闭连麦
+    if (self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CHATTING) {
+        AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"提示" icon:nil message:@"当前正在与主播连麦，请先结束连麦在退出观看" delegate:self buttonTitles:@"取消", @"结束连麦", nil];
+        alert.tag = ALIVC_START_ALERT_TAG_VIDEOCALL_EXIT;
+        [alert showInView:self.liveRoomView];
+        return;
+    }
     
     // 通知服务器退出直播间
     [self sendQuitLiveRoomRequest];
@@ -407,6 +413,16 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     if (!self.mediaPlayerCall) {
         return;
     }
+    
+    [self.liveRoomView.pushView removeFromSuperview];
+    self.liveRoomView.mediaPalyerView.frame = [UIScreen mainScreen].bounds;
+    
+    int ret = [self.mediaPlayerCall offlineChat];
+    NSLog(@"观众SDK结束连麦 %d", ret);
+    
+    self.liveStatus = ALIVC_LIVE_ROOM_STATUS_WATCHING;
+    [self.invitePlayUrlArray removeAllObjects];
+    [self.liveRoomView removeAllChatViews];
 }
 
 #pragma mark - NSNotification

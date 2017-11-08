@@ -22,5 +22,7 @@
 
 // 添加连麦窗口
 - (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uids:(NSArray*)uids;
+// 移除所有连麦窗口
+- (void)removeAllChatViews;
 
 @end

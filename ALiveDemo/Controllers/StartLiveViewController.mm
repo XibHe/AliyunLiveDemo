@@ -291,7 +291,16 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
  */
 - (void)closeLiveCall
 {
-  
+    [self.startLiveView removeAllChatViews];
+    if (self.publisherVideoCall) {
+        int ret = [self.publisherVideoCall abortChat];
+        NSLog(@"结束连麦:%d", ret);
+    }
+    self.liveStatus = ALIVC_START_LIVE_STATUS_LIVING;
+    [self.currentInviterArray removeAllObjects];
+    [self.inviterAudienceList removeAllObjects];
+    
+    [self.interruptUids removeAllObjects];
 }
 
 #pragma mark - ======== RecieveMessageDelegate (接收消息代理) ========
@@ -305,7 +314,7 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     }
     for (LiveInviteInfo* info in self.currentInviterArray) {
         if ([info.uid isEqualToString:inviterUid]) {
-            NSLog(@"改用户已经在连麦中");
+            NSLog(@"该用户已经在连麦中");
             return;
         }
     }
