@@ -113,6 +113,16 @@
     return viewArray;
 }
 
+// 移除所有连麦窗口
+- (void)removeAllChatViews
+{
+    for (NSDictionary* dic in self.viewMapArray) {
+        UIView* view = [[dic allValues] objectAtIndex:0];
+        [view removeFromSuperview];
+    }
+    [self.viewMapArray removeAllObjects];
+}
+
 - (CGRect)getChatViewFrameWithIndex:(NSInteger)index
 {
     CGRect rect = CGRectZero;
