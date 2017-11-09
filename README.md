@@ -5,6 +5,15 @@
 * 连麦SDK   ———> AlivcLibRtmp.framework , AlivcVideoChat.framework
 * 直播间SDK ———> AlivcLiveChatRoom.framework
 
+# 后期计划添加以下功能
+- [ ] 连麦时预览窗口切换(全屏切换)
+- [ ] 添加几个简单的滤镜效果
+- [ ] 增加帧率、视频码率、延时、丢包率的显示
+- [ ] 增加分辨率、帧率、码率、视频清晰度(普通、720P、高清)调节的slider控件
+- [ ] 特殊场景的处理(网络、电话、前后台切换)
+- [ ] 即时通讯（聊天室）
+- [ ] 二次封装
+
 # 接入Demo时遇到的问题
 
 1.  Enable Bitcode 设置为NO,  AlivcVideoChat.framework 不支持。
