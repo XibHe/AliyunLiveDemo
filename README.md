@@ -97,3 +97,17 @@ https://segmentfault.com/q/1010000000586639
 其中，userRoomTag与uid一致。
 
 原因:  直播间(LiveRoomViewController)，在退出直播间时，未通知服务器，未关闭播放器；推流(StartLiveViewController)，在结束推流时，未发送退出直播请求，未完全关闭直播。
+
+# demo中用于直播的账号及获取的当前直播列表
+
+由于使用的是阿里云提供的<font color="1122ee">http://118.178.94.208:3000/</font>测试端口，因此，demo中的直播列表会存在很多无效的直播，想要在一大堆列表中找到自己新发起的直播会很费劲。因此，我在注册直播用户时，在用户名前加了一个名为<font color="1122ee">MyLive_</font>的前缀，最后上传服务器的用户名都会带这个前缀。在直播列表类（MainViewController）请求直播列表获取数据时，增加判断。
+
+```
+   for (RoomInfoModel* model in roomInfos) {
+      if ([model.name rangeOfString:@"MyLive_"].location != NSNotFound) {
+                [self.listDataArray addObject:model];
+      }
+   }
+```
+
+只将含有<font color="1122ee">MyLive_</font>前缀的列表数据加入到数据源中展示。
