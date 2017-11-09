@@ -11,11 +11,15 @@
 
 @class LiveRoomView;
 @protocol LiveRoomViewDelegate <NSObject>
+@optional
 - (void)quitLiveAction;
 - (void)connectAction:(UIButton *)sender;
 - (void)likeLiveAction;
 - (void)switchCameraAction;
 - (void)beautyAction:(UIButton *)sender;
+@required
+// 断开连麦(观众自己)
+- (void)interruptLiveCall;
 @end
 
 @interface LiveRoomView : UIView<ChatViewCloseDelegate>

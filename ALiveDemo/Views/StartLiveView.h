@@ -14,6 +14,9 @@
 - (void)quitLiveAction;
 - (void)switchCameraAction;
 - (void)beautyAction:(UIButton *)sender;
+@required
+// 主播端断开连麦的观众
+- (void)interruptLiveCallWithUrl:(NSString *)playUrl;
 @end
 
 @interface StartLiveView : UIView
@@ -22,6 +25,8 @@
 
 // 添加连麦窗口
 - (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uids:(NSArray*)uids;
+// 移除连麦窗口，改变窗口位置
+- (void)removeChatViewsWithUrl:(NSString*)playUrl;
 // 移除所有连麦窗口
 - (void)removeAllChatViews;
 

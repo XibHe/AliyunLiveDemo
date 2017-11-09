@@ -10,6 +10,7 @@
 
 #import <Foundation/Foundation.h>
 #import <AlivcLiveChatRoom/AlivcLiveChatRoom.h>
+#import "LiveInviteInfo.h"
 
 @protocol RecieveMessageDelegate <NSObject>
 
@@ -31,6 +32,11 @@
 @optional
 - (void)onGetStartLiveMessage:(NSString*)roomId uid:(NSString*)uid name:(NSString*)name playUrl:(NSString*)playUrl;
 
+/**
+ 离开连麦
+ */
+@optional
+- (void)onGetLeaveVideoChatMessage:(LiveInviteInfo*)inviteInfo;
 
 // 点赞
 @optional

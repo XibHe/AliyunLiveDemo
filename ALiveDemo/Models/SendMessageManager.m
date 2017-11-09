@@ -225,7 +225,7 @@
     }];
 }
 /**
- 发起结束连麦请求
+ 发起结束连麦请求，也可以说是移除某一个连麦的请求
  */
 + (void)leaveVideoCall:(NSString*)roomId uid:(NSString*)uid block:(void (^)(NSError *error))block
 {

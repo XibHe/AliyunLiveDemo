@@ -101,7 +101,16 @@
             }
         }
             break;
-            
+        case 19:
+        {
+            LiveInviteInfo *info = [[LiveInviteInfo alloc] init];
+            [info setValuesForKeysWithDictionary:dic[@"data"]];
+            // 断开连麦
+            if (self.delegate && [self.delegate respondsToSelector:@selector(onGetLeaveVideoChatMessage:)]) {
+                [self.delegate onGetLeaveVideoChatMessage:info];
+            }
+        }
+            break;
         default:
             break;
     }

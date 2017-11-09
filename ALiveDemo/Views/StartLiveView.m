@@ -102,7 +102,7 @@
         chatView.chatView.tag = 998877 + index;
         chatView.nameLabel.text = [uids objectAtIndex:index];
         chatView.delegate = self;
-        chatView.closeBtn.hidden = YES;
+        //chatView.closeBtn.hidden = YES;
         [self addSubview:chatView];
         [viewArray addObject:chatView.chatView];
         
@@ -121,6 +121,35 @@
         [view removeFromSuperview];
     }
     [self.viewMapArray removeAllObjects];
+}
+
+// 移除连麦窗口，改变窗口位置
+- (void)removeChatViewsWithUrl:(NSString*)playUrl
+{
+    int findIndex = -1;
+    NSURL* url = [NSURL URLWithString:playUrl];
+    for (int i=0; i< (int)[self.viewMapArray count]; i++) {
+        NSDictionary* dic = [self.viewMapArray objectAtIndex:i];
+        
+        NSArray* views = [dic allValues];
+        UIView* view = [views objectAtIndex:0];
+        
+        if([dic objectForKey:url] != nil) {
+            findIndex = i;
+            [view removeFromSuperview];
+        }
+        
+        if (findIndex != -1) {
+            [UIView animateWithDuration:0.5 animations:^{
+                view.frame = [self getChatViewFrameWithIndex:i - 1];
+            }];
+            
+        }
+    }
+    
+    if (findIndex != -1) {
+        [self.viewMapArray removeObjectAtIndex:findIndex];
+    }
 }
 
 - (CGRect)getChatViewFrameWithIndex:(NSInteger)index
@@ -162,6 +191,17 @@
 #pragma mark - ChatViewCloseDelegate
 - (void)onClickChatViewCloseButtonWithView:(UIView *)view
 {
-    
+    NSURL* url = nil;
+    for (NSDictionary* dic in self.viewMapArray) {
+        NSArray* arry = [dic allValues];
+        UIView* dicView = arry[0];
+        if (dicView == view) {
+            url = [dic allKeys][0];
+            break;
+        }
+    }
+    if (url) {
+        [self.delegate interruptLiveCallWithUrl:[url absoluteString]];
+    }
 }
 @end

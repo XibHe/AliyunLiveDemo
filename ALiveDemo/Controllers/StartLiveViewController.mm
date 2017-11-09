@@ -182,6 +182,19 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     }];
 }
 
+/**
+ *  移除某一个连麦请求
+ */
+- (void)sendCloseOneInviterRequestWithUid:(NSString *)uid
+{
+    [SendMessageManager leaveVideoCall:self.roomId uid:uid block:^(NSError *error) {
+        if (error) {
+            [self showAlertViewWithMessage:[NSString stringWithFormat:@"离开连麦请求失败error:%ld", (long)error.code]];
+            return ;
+        }
+    }];
+}
+
 #pragma mark - ======== 请求(连麦相关) ========
 /**
  *  发送获取连麦消息(发送是否同意连麦)
@@ -198,6 +211,7 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
 }
 
 #pragma mark - StartLiveViewDelegate
+// 退出聊天室
 - (void)quitLiveAction
 {
     // 发送退出直播请求
@@ -213,12 +227,12 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     [UIApplication sharedApplication].idleTimerDisabled = NO;
     [self dismissViewControllerAnimated:YES completion:nil];
 }
-
+// 切换前后摄像头
 - (void)switchCameraAction
 {
     [self.publisherVideoCall switchCamera];
 }
-
+// 开启美颜
 - (void)beautyAction:(UIButton *)sender
 {
     NSNumber* number = [[NSNumber alloc] initWithBool:sender.selected];
@@ -226,6 +240,26 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     NSDictionary* dic = [[NSDictionary alloc] initWithObjectsAndKeys:number, key,nil];
     [self.publisherVideoCall setFilterParam:dic];
     [sender setSelected:!sender.selected];
+}
+// 主播端断开连麦的观众
+- (void)interruptLiveCallWithUrl:(NSString *)playUrl
+{
+    int findIndex = -1;
+    for (int i=0; i<(int)[self.currentInviterArray count]; i++) {
+        LiveInviteInfo* info = [self.currentInviterArray objectAtIndex:i];
+        if (info) {
+            if ([playUrl isEqualToString:info.playUrl]) {
+                findIndex = i;
+                break;
+            }
+        }
+    }
+    if (findIndex == -1) {
+        return;
+    }
+    
+    LiveInviteInfo *info = self.currentInviterArray[findIndex];
+    [self sendCloseOneInviterRequestWithUid:info.uid];
 }
 
 #pragma mark - ======== Action ========
@@ -301,6 +335,41 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     [self.inviterAudienceList removeAllObjects];
     
     [self.interruptUids removeAllObjects];
+}
+
+// 移除相应的连麦信息
+- (void)removeLiveCallWithPlayUid:(NSString *)uid
+{
+    //找到移除的对应信息
+    int removeIndex = -1;
+    NSString* playUrl = nil;
+    for (int index = 0; index < self.currentInviterArray.count; index++) {
+        LiveInviteInfo *info = self.currentInviterArray[index];
+        if ([info.uid isEqualToString:uid]) {
+            removeIndex = index;
+            playUrl = info.playUrl;
+            break;
+        }
+    }
+    
+    if(removeIndex == -1){
+        NSLog(@"未找到移除的连麦方: %@",uid);
+        //assert(0);
+        return;
+    }
+    
+    [self.currentInviterArray removeObjectAtIndex:removeIndex];
+    
+    // 移除连麦窗口，改变窗口位置
+    [self.startLiveView removeChatViewsWithUrl:playUrl];
+    
+    NSURL *playURL = [NSURL URLWithString:playUrl];
+    int ret = [self.publisherVideoCall removeChats:@[playURL]];
+    if (ret != 0) {
+        [self showAlertViewWithMessage:@"SDK移除连麦失败"];
+    }
+    
+    [self.inviterAudienceList removeObject:uid];
 }
 
 #pragma mark - ======== RecieveMessageDelegate (接收消息代理) ========
@@ -393,6 +462,24 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
         info.roomId = roomId;
         
         [self.currentInviterArray addObject:info];
+    }
+}
+
+// 断开连麦(接收到观众主动断开连麦的消息)
+- (void)onGetLeaveVideoChatMessage:(LiveInviteInfo*)inviteInfo
+{
+    //观众主动断开
+    [self removeLiveCallWithPlayUid:inviteInfo.uid];
+    
+    //移除最后一个连麦，则整个连麦关闭
+    if ([self.currentInviterArray count] == 0) {
+        [self.startLiveView removeAllChatViews];
+        if (self.publisherVideoCall) {
+            int ret = [self.publisherVideoCall abortChat];
+            NSLog(@"结束连麦:%d", ret);
+        }
+        self.liveStatus = ALIVC_START_LIVE_STATUS_LIVING;
+        return;
     }
 }
 

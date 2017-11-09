@@ -110,9 +110,12 @@
 }
 
 #pragma amrk - ChatViewCloseDelegate
+// 断开连麦按钮触发的事件
 - (void)onClickChatViewCloseButtonWithView:(UIView *)view
 {
-    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(interruptLiveCall)]) {
+        [self.delegate interruptLiveCall];
+    }
 }
 
 - (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uidArrays:(NSArray*)uidsArray
@@ -125,14 +128,20 @@
     NSMutableArray *viewArray = [NSMutableArray array];
     
     int count = (int)[playArray count];
+    NSString *userId = [[NSUserDefaults standardUserDefaults] objectForKey:USERID];
     for (int index = 0; index < count; index++) {
         
         ChatView *chatView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:index + currentChatCount + 1] ];
         chatView.chatView.tag = 998877 + index;
         chatView.nameLabel.text = [uidsArray objectAtIndex:index];
-        chatView.closeBtn.hidden = YES;
-        chatView.delegate = self;
         
+        // 如果连麦窗口是观众自己则显示X号，否则，隐藏X号。
+        if ([uidsArray[index] isEqualToString:userId]) {
+            chatView.closeBtn.hidden = NO;
+        } else {
+            chatView.closeBtn.hidden = YES;
+        }
+        chatView.delegate = self;
         [self addSubview:chatView];
         [viewArray addObject:chatView.chatView];
         

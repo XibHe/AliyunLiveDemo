@@ -337,6 +337,15 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     [sender setSelected:!sender.selected];
 }
 
+// 断开连麦
+- (void)interruptLiveCall
+{
+    //发送结束连麦请求
+    [self sendLeaveVideoCallRequest];
+    // 断开连麦
+    [self closeLiveCall];
+}
+
 #pragma mark - ======== RecieveMessageDelegate (接收消息代理) ========
 // 主动发起连麦，收到对方同意连麦消息
 - (void)onGetInviteAgreeMessage:(NSString *)inviteeUid inviteeName:(NSString *)inviteeName inviteeRoomId:(NSString *)inviteeRoomId inviterRoomId:(NSString *)inviterRoomId mainPlayUrl:(NSURL *)mainPlayUrl rtmpUrl:(NSString *)rtmpUrl otherPlayUrls:(NSArray *)otherPlayUrls otherPlayUids:(NSArray *)otherPlayUids
@@ -364,6 +373,7 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
 #pragma mark - AlivcLiveAlertViewDelegate
 - (void)alertView:(AlivcLiveAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+    // 退出直播间
     if (alertView.tag == ALIVC_START_ALERT_TAG_ROOM_EXIT) {
         if (buttonIndex == 0) {
             if (self.mediaPlayerCall && self.playUrl) {
@@ -373,7 +383,9 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
         if (buttonIndex == 1) {
             
             // 如果有连麦，则需关闭连麦
-            
+            if(self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CHATTING){
+                [self closeLiveCall];
+            }
             //通知服务器退出直播间
             [self sendQuitLiveRoomRequest];
             
@@ -388,6 +400,14 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
             
             [self dismissViewControllerAnimated:YES completion:nil];
             [UIApplication sharedApplication].idleTimerDisabled = NO;
+        }
+    } else if (alertView.tag == ALIVC_START_ALERT_TAG_VIDEOCALL_EXIT) {
+        // 退出连麦
+        if (buttonIndex == 1) {
+            // 发送结束连麦请求
+            [self sendLeaveVideoCallRequest];
+            // 关闭连麦
+            [self closeLiveCall];
         }
     }
 }

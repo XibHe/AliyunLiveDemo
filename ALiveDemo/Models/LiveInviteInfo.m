@@ -20,4 +20,8 @@
     return info;
 }
 
+// 未定义的key值，避免崩溃
+- (void)setValue:(id)value forUndefinedKey:(NSString *)key
+{
+}
 @end
