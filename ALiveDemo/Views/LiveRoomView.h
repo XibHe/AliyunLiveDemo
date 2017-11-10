@@ -33,7 +33,10 @@
  添加多个连麦对话框
  */
 - (NSArray<UIView *> *)addChatViewsWithArray:(NSArray*)playArray uidArrays:(NSArray*)uidsArray;
-
+/**
+ 移除某一个连麦对话框
+ */
+- (void)removeChatViewsWithUrl:(NSString*)playUrl;
 /**
  移除所有连麦对话框
  */

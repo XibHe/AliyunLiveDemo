@@ -35,6 +35,7 @@
 -(void)addCloseButton{
     UIImage* closeImg = [UIImage imageNamed:@"singalClose"];
     self.closeBtn = [UIButton buttonWithType:(UIButtonTypeCustom)];
+    //[self.closeBtn setBackgroundColor:[UIColor redColor]];
     [self.closeBtn setBackgroundImage:closeImg forState:(UIControlStateNormal)];
     self.closeBtn.frame = CGRectMake(self.frame.size.width-closeImg.size.width,5,closeImg.size.width,closeImg.size.height);
     [self addSubview:self.closeBtn];

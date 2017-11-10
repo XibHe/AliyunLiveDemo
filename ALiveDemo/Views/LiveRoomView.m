@@ -94,7 +94,7 @@
     // 连麦视图显示框
     self.pushView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:0]];
     self.pushView.delegate = self;
-    self.pushView.closeBtn.hidden = YES;
+    //self.pushView.closeBtn.hidden = YES;
 }
 
 - (CGRect)getChatViewFrameWithIndex:(NSInteger)index {
@@ -128,19 +128,12 @@
     NSMutableArray *viewArray = [NSMutableArray array];
     
     int count = (int)[playArray count];
-    NSString *userId = [[NSUserDefaults standardUserDefaults] objectForKey:USERID];
+    //NSString *userId = [[NSUserDefaults standardUserDefaults] objectForKey:USERID];
     for (int index = 0; index < count; index++) {
         
-        ChatView *chatView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:index + currentChatCount + 1] ];
+        ChatView *chatView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:index + currentChatCount + 1]];
         chatView.chatView.tag = 998877 + index;
         chatView.nameLabel.text = [uidsArray objectAtIndex:index];
-        
-        // 如果连麦窗口是观众自己则显示X号，否则，隐藏X号。
-        if ([uidsArray[index] isEqualToString:userId]) {
-            chatView.closeBtn.hidden = NO;
-        } else {
-            chatView.closeBtn.hidden = YES;
-        }
         chatView.delegate = self;
         [self addSubview:chatView];
         [viewArray addObject:chatView.chatView];
@@ -150,6 +143,37 @@
         [self.viewMapArray addObject:dic];
     }
     return viewArray;
+}
+
+/**
+ 移除某一个连麦对话框
+ */
+- (void)removeChatViewsWithUrl:(NSString*)playUrl
+{
+    int findIndex = -1;
+    NSURL* url = [NSURL URLWithString:playUrl];
+    for (int i=0; i< (int)[self.viewMapArray count]; i++) {
+        NSDictionary* dic = [self.viewMapArray objectAtIndex:i];
+        
+        NSArray* views = [dic allValues];
+        UIView* view = [views objectAtIndex:0];
+        
+        if([dic objectForKey:url] != nil) {
+            findIndex = i;
+            [view removeFromSuperview];
+        }
+        
+        if (findIndex != -1) {
+            [UIView animateWithDuration:0.5 animations:^{
+                view.frame = [self getChatViewFrameWithIndex:i - 1];
+            }];
+            
+        }
+    }
+    
+    if (findIndex != -1) {
+        [self.viewMapArray removeObjectAtIndex:findIndex];
+    }
 }
 
 - (void)removeAllChatViews

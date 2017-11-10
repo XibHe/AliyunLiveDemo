@@ -162,6 +162,31 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     self.liveStatus = ALIVC_LIVE_ROOM_STATUS_CHATTING;
 }
 
+/**
+ *  删除一个连麦
+ */
+- (void)removeLiveCallWithPlayUrls:(NSArray<NSString *> *)playUrlArray
+{
+    NSMutableArray* urlArray = [[NSMutableArray alloc] init];
+    for (NSString *playUrl in playUrlArray) {
+        [urlArray addObject:[NSURL URLWithString:playUrl]];
+        for (int i=0; i<[self.invitePlayUrlArray count]; i++) {
+            LiveInviteInfo* info = [self.invitePlayUrlArray objectAtIndex:i];
+            NSString* currentUrl = info.playUrl;
+            if ([currentUrl isEqualToString:playUrl]) {
+                [self.liveRoomView removeChatViewsWithUrl:playUrl];
+                [self.invitePlayUrlArray removeObject:info];
+                break;
+            }
+        }
+    }
+    
+    int ret = [self.mediaPlayerCall removeChats:urlArray];
+    if (ret != 0) {
+        [self showAlertViewWithMessage:@"SDK移除连麦失败"];
+    }
+}
+    
 #pragma mark - ======== 请求(直播间相关) ========
 /**
  发送加入直播请求
@@ -360,6 +385,41 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
         info.uid = uid;
         info.playUrl = url;
         [self.invitePlayUrlArray addObject:info];
+    }
+}
+
+//不同意连麦
+- (void)onGetInviteDisAgreeMessage:(NSString*)inviteeUid inviteeName:(NSString*)inviteeName
+{
+    if (self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CALLING || self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CHATTING) {
+        [self showAlertViewWithMessage:@"对方不同意连麦"];
+        self.liveStatus = ALIVC_LIVE_ROOM_STATUS_WATCHING;
+    }
+}
+
+//收到直播结束消息
+- (void)onGetCloseLiveMessage:(NSString*)roomId
+{
+    AlivcLiveAlertView *alert = [[AlivcLiveAlertView alloc] initWithTitle:@"提示" icon:nil message:@"直播结束" delegate:self buttonTitles:@"重试", @"退出", nil];
+    alert.tag = ALIVC_START_ALERT_TAG_ROOM_EXIT;
+    [alert showInView:self.liveRoomView];
+    return;
+}
+
+//离开连麦
+- (void)onGetLeaveVideoChatMessage:(LiveInviteInfo*)inviteInfo
+{
+    //如果自己收到离开消息，则是主播取消了你的连麦
+    NSString *uid = inviteInfo.uid;
+    if ([uid isEqualToString:self.userUid]){
+        //断开推流
+        [self closeLiveCall];
+        return;
+    }
+    
+    //如果正在连麦，则移除该连麦的播放窗口
+    if (self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CALLING || self.liveStatus == ALIVC_LIVE_ROOM_STATUS_CHATTING) {
+        [self removeLiveCallWithPlayUrls:@[inviteInfo.playUrl]];
     }
 }
 
