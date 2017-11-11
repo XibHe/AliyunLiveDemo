@@ -312,12 +312,12 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
  */
 - (void)addLiveCallWithPlayUrls:(NSArray<NSURL *> *)playUrlArray uids:(NSArray<NSString*> *)playUidArray
 {
-//    NSArray *inviteViews = [self.startLiveView addChatViewsWithArray:playUrlArray uids:playUidArray];
-//    int ret = [self.publiserVideoCall addChats:playUrlArray views:inviteViews];
-//    if (ret != 0) {
-//        [self showAlertViewWithMessage:@"SDK添加连麦失败"];
-//    }
-//    self.liveStatus = ALIVC_START_LIVE_STATUS_CHATTING;
+    NSArray *inviteViews = [self.startLiveView addChatViewsWithArray:playUrlArray uids:playUidArray];
+    int ret = [self.publisherVideoCall addChats:playUrlArray views:inviteViews];
+    if (ret != 0) {
+        [self showAlertViewWithMessage:@"SDK添加连麦失败"];
+    }
+    self.liveStatus = ALIVC_START_LIVE_STATUS_CHATTING;
 }
 
 /**
