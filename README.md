@@ -30,7 +30,7 @@
 
 ```
 
-3.  xcode9 pch
+3.  添加xcode9 pch
 
 4. 添加相机，麦克风访问权限(开启预览失败-2)
 
@@ -97,6 +97,55 @@ https://segmentfault.com/q/1010000000586639
 其中，userRoomTag与uid一致。
 
 原因:  直播间(LiveRoomViewController)，在退出直播间时，未通知服务器，未关闭播放器；推流(StartLiveViewController)，在结束推流时，未发送退出直播请求，未完全关闭直播。
+
+10. 连麦时需要注意的地方： 
+    * 连麦后对其他直播状态的影响；
+    * 混流后的直播；
+    * 连麦断开时的处理；
+    * 主动发起连麦和收到连麦邀请；
+    * 与连麦相关的请求的；
+    * 每次退出直播或者退出房间时，需要判断当前是否开启了连麦，若正在连麦，则结束连麦。
+    
+    主麦端点击连麦按钮，读取观众列表；
+    副麦端点击连麦按钮，发起连麦请求；
+    
+   服务器报错
+   
+>  Code = 2010
+   访问用户信息失败
+   
+**结束连麦的场景:**
+
+> 针对观众端连麦。主播断开连麦；混流失败结束连麦；离开连麦(连麦数不只一个时，其他连麦观众连麦被取消；或者当前连麦观众连麦被取消；需要移除对应的chatView的播放)；中断连麦(接收到断开连麦的消息代理)；
+> 
+> 针对主播端连麦(当前连麦列表)。主播结束连麦；混流失败结束连麦；中断连麦(接收到断开连麦的消息代理)；结束直播；离开连麦(观众主动断开连麦)；
+
+11. 观众端结束连麦，主播端(StartLiveViewController)接收到断开连麦的代理消息：
+
+```objectivec
+- (void)onGetLeaveVideoChatMessage:(LiveInviteInfo*)inviteInfo;
+```
+关闭连麦窗口。在LiveInviteInfo(连麦人信息model)中定义方法：
+
+```objectivec
+- (void)setValue:(id)value forUndefinedKey:(NSString *)key;
+```
+未定义的key值，避免崩溃。
+
+12. 连麦请求失败3002,
+
+```
+class: <0x1701d2c00 AlivcRequestManager.m:(36) > method: -[AlivcRequestManager requestWithHost:param:block:]_block_invoke 
+host: videocall/feedback *** response:{
+    code = 3002;
+    data = 3;
+    message = "\U8fde\U9ea6\U89c2\U4f17\U4e0d\U80fd\U8d85\U8fc73\U4e2a";
+}
+```
+
+2017-11-09 17:21:18.864968+0800 ALiveDemo[1636:565919] message:连麦观众不能超过3个。
+
+13. 经常会因为主播端未关闭直播而退出应用时，或崩溃时，造成直播列表中出现重复数据的情况。
 
 # demo中用于直播的账号及获取的当前直播列表
 
