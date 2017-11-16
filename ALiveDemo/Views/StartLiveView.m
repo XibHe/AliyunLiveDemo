@@ -99,12 +99,12 @@
     for (int index = 0; index < count; index++) {
         
         ChatView *chatView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:index + currentChatCount]];
-        chatView.chatView.tag = 998877 + index;
-        chatView.nameLabel.text = [uids objectAtIndex:index];
+        chatView.tag = 998877 + index;
+        //chatView.nameLabel.text = [uids objectAtIndex:index];
         chatView.delegate = self;
         //chatView.closeBtn.hidden = YES;
         [self addSubview:chatView];
-        [viewArray addObject:chatView.chatView];
+        [viewArray addObject:chatView];
         
         NSMutableDictionary* dic = [[NSMutableDictionary alloc] init];
         [dic setObject:chatView forKey:[playArray objectAtIndex:index]];
@@ -189,19 +189,46 @@
 }
 
 #pragma mark - ChatViewCloseDelegate
-- (void)onClickChatViewCloseButtonWithView:(UIView *)view
+//- (void)onClickChatViewCloseButtonWithView:(UIView *)view
+//{
+//    NSURL* url = nil;
+//    for (NSDictionary* dic in self.viewMapArray) {
+//        NSArray* arry = [dic allValues];
+//        UIView* dicView = arry[0];
+//        if (dicView == view) {
+//            url = [dic allKeys][0];
+//            break;
+//        }
+//    }
+//    if (url) {
+//        [self.delegate interruptLiveCallWithUrl:[url absoluteString]];
+//    }
+//}
+- (void)switchLiveFrame
 {
-    NSURL* url = nil;
-    for (NSDictionary* dic in self.viewMapArray) {
-        NSArray* arry = [dic allValues];
-        UIView* dicView = arry[0];
-        if (dicView == view) {
-            url = [dic allKeys][0];
-            break;
+    CGFloat chatViewSizeWidth = 0;
+    ChatView *chatView;
+    for (chatView in [self subviews]) {
+        if (chatView.tag == 998877) {
+            chatViewSizeWidth = chatView.frame.size.width;
         }
     }
-    if (url) {
-        [self.delegate interruptLiveCallWithUrl:[url absoluteString]];
+    
+    NSString *switchStatus = nil;
+    if (chatViewSizeWidth < ScreenWidth) {
+        [chatView setFrame:CGRectMake(0, 0, ScreenWidth, ScreenHeight)];
+        [self.publisherView setFrame:[self getChatViewFrameWithIndex:0]];
+        switchStatus = @"1";
+        [self layoutIfNeeded];
+    } else {
+        [chatView setFrame:[self getChatViewFrameWithIndex:0]];
+        [self.publisherView setFrame:CGRectMake(0, 0, ScreenWidth, ScreenHeight)];
+        switchStatus = @"0";
+        [self layoutIfNeeded];
+    }
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(startLiveViewControllerSwitchFrame:)]) {
+        [self.delegate startLiveViewControllerSwitchFrame:switchStatus];
     }
 }
 @end

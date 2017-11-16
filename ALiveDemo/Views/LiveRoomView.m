@@ -111,10 +111,29 @@
 
 #pragma amrk - ChatViewCloseDelegate
 // 断开连麦按钮触发的事件
-- (void)onClickChatViewCloseButtonWithView:(UIView *)view
+//- (void)onClickChatViewCloseButtonWithView:(UIView *)view
+//{
+//    if (self.delegate && [self.delegate respondsToSelector:@selector(interruptLiveCall)]) {
+//        [self.delegate interruptLiveCall];
+//    }
+//}
+
+- (void)switchLiveFrame
 {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(interruptLiveCall)]) {
-        [self.delegate interruptLiveCall];
+    CGFloat pushViewSizeWidth = self.pushView.frame.size.width;
+    NSString *switchStatus = nil;
+    if (pushViewSizeWidth < ScreenWidth) {
+        [self.pushView setFrame:CGRectMake(0, 0, ScreenWidth, ScreenHeight)];
+        [self.mediaPalyerView setFrame:[self getChatViewFrameWithIndex:0]];
+        switchStatus = @"1";
+    } else {
+        [self.pushView setFrame:[self getChatViewFrameWithIndex:0]];
+        [self.mediaPalyerView setFrame:CGRectMake(0, 0, ScreenWidth, ScreenHeight)];
+        switchStatus = @"0";
+    }
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(liveRoomViewControllerSwitchFrame:)]) {
+        [self.delegate liveRoomViewControllerSwitchFrame:switchStatus];
     }
 }
 
@@ -132,11 +151,11 @@
     for (int index = 0; index < count; index++) {
         
         ChatView *chatView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:index + currentChatCount + 1]];
-        chatView.chatView.tag = 998877 + index;
-        chatView.nameLabel.text = [uidsArray objectAtIndex:index];
+        chatView.tag = 998877 + index;
+        //chatView.nameLabel.text = [uidsArray objectAtIndex:index];
         chatView.delegate = self;
         [self addSubview:chatView];
-        [viewArray addObject:chatView.chatView];
+        [viewArray addObject:chatView];
         
         NSMutableDictionary* dic = [[NSMutableDictionary alloc] init];
         [dic setObject:chatView forKey:[playArray objectAtIndex:index]];

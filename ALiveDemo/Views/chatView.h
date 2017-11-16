@@ -10,13 +10,14 @@
 
 @protocol ChatViewCloseDelegate <NSObject>
 
-- (void)onClickChatViewCloseButtonWithView:(UIView*)view;
-
+@optional
+//- (void)onClickChatViewCloseButtonWithView:(UIView*)view;
+- (void)switchLiveFrame;
 @end
 
 @interface ChatView : UIView
 
-@property (nonatomic, strong) UIView *chatView;
+//@property (nonatomic, strong) UIView *chatView;
 @property (nonatomic, strong) UILabel *nameLabel;
 @property (nonatomic, strong) UIButton *closeBtn;
 @property (nonatomic, assign) id<ChatViewCloseDelegate> delegate;

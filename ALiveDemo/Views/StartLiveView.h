@@ -14,6 +14,7 @@
 - (void)quitLiveAction;
 - (void)switchCameraAction;
 - (void)beautyAction:(UIButton *)sender;
+- (void)startLiveViewControllerSwitchFrame:(NSString *)status;
 @required
 // 主播端断开连麦的观众
 - (void)interruptLiveCallWithUrl:(NSString *)playUrl;

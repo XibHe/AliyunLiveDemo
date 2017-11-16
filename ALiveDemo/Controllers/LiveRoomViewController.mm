@@ -147,7 +147,7 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     
     NSArray *playerViews = [self.liveRoomView addChatViewsWithArray:otherPlayUrlArray uidArrays:otherPlayUidArray];
     
-    int ret = [self.mediaPlayerCall onlineChats:pushUrl width:width height:height preview:self.liveRoomView.pushView.chatView publisherParam:self.publisherParam hostPlayUrl:hostPlayUrl playerUrls:otherPlayUrlArray playerViews:playerViews];
+    int ret = [self.mediaPlayerCall onlineChats:pushUrl width:width height:height preview:self.liveRoomView.pushView publisherParam:self.publisherParam hostPlayUrl:hostPlayUrl playerUrls:otherPlayUrlArray playerViews:playerViews];
     
     if (ret != 0) {
         [self.liveRoomView removeAllChatViews];
@@ -370,6 +370,18 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     // 断开连麦
     [self closeLiveCall];
 }
+// 连麦时预览窗口切换(全屏切换)
+- (void)liveRoomViewControllerSwitchFrame:(NSString *)status
+{
+    NSInteger chatViewInt = [[self.liveRoomView subviews] count];
+    if ([status isEqualToString:@"1"]) {
+        [self.liveRoomView exchangeSubviewAtIndex:0 withSubviewAtIndex:chatViewInt - 1];
+    } else if ([status isEqualToString:@"0"]) {
+        [self.liveRoomView exchangeSubviewAtIndex:chatViewInt - 1 withSubviewAtIndex:0];
+    }
+    [self.liveRoomView layoutIfNeeded];
+    NSLog(@"self.liveRoomView.subviews = %@",self.liveRoomView.subviews);
+}
 
 #pragma mark - ======== RecieveMessageDelegate (接收消息代理) ========
 // 主动发起连麦，收到对方同意连麦消息
@@ -464,6 +476,17 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     } else if (alertView.tag == ALIVC_START_ALERT_TAG_VIDEOCALL_EXIT) {
         // 退出连麦
         if (buttonIndex == 1) {
+            
+            // 若是为全屏连麦视图，则切换至小屏连麦
+            NSArray *liveRoomViewArray = [self.liveRoomView subviews];
+            if ([liveRoomViewArray[0] isKindOfClass:[ChatView class]]) {
+                [self.liveRoomView.pushView setFrame:CGRectMake(ScreenWidth - 85, ScreenHeight - 80 - 144 - 15, 81, 144)];
+                [self.liveRoomView.mediaPalyerView setFrame:CGRectMake(0, 0, ScreenWidth, ScreenHeight)];
+                [self.liveRoomView exchangeSubviewAtIndex:[liveRoomViewArray count] - 2 withSubviewAtIndex:0];
+                [self.liveRoomView layoutIfNeeded];
+                NSLog(@" -----------self.liveRoomView.subviews = %@",self.liveRoomView.subviews);
+            }
+            
             // 发送结束连麦请求
             [self sendLeaveVideoCallRequest];
             // 关闭连麦

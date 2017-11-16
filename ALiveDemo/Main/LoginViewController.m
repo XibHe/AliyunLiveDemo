@@ -83,7 +83,7 @@
     }
     
     [SVProgressHUD show];
-    NSString *userName = [NSString stringWithFormat:@"MyLive_%@",self.nameTextField.text];
+    NSString *userName = [NSString stringWithFormat:@"MyLive1_%@",self.nameTextField.text];
     [SendMessageManager userLogIn:userName block:^(UserInfo *userInfo, NSError *error) {
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{

@@ -17,6 +17,7 @@
 - (void)likeLiveAction;
 - (void)switchCameraAction;
 - (void)beautyAction:(UIButton *)sender;
+- (void)liveRoomViewControllerSwitchFrame:(NSString *)status;
 @required
 // 断开连麦(观众自己)
 - (void)interruptLiveCall;

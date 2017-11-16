@@ -262,6 +262,19 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     [self sendCloseOneInviterRequestWithUid:info.uid];
 }
 
+// 连麦时预览窗口切换(全屏切换)
+- (void)startLiveViewControllerSwitchFrame:(NSString *)status
+{
+    NSInteger chatViewInt = [[self.startLiveView subviews] count];
+    if ([status isEqualToString:@"1"]) {
+        [self.startLiveView exchangeSubviewAtIndex:0 withSubviewAtIndex:chatViewInt - 1];
+    } else if ([status isEqualToString:@"0"]) {
+        [self.startLiveView exchangeSubviewAtIndex:chatViewInt - 1 withSubviewAtIndex:0];
+    }
+    [self.startLiveView layoutIfNeeded];
+    NSLog(@"self.startLiveView.subviews = %@",self.startLiveView.subviews);
+}
+
 #pragma mark - ======== Action ========
 - (void)finishLive
 {
