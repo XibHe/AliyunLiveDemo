@@ -83,6 +83,14 @@
     [beautyBtn setBackgroundImage:[UIImage imageNamed:@"beauty"] forState:UIControlStateNormal];
     [beautyBtn addTarget:self action:@selector(beautyBtnClick:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:beautyBtn];
+    
+    // 输出性能参数
+    self.textView = [[UITextView alloc] initWithFrame:CGRectMake(ScreenWidth - 250,100,250,350)];
+    self.textView.textColor = [UIColor redColor];
+    self.textView.backgroundColor = [UIColor clearColor];
+    self.textView.font = [UIFont fontWithName:@"Arial" size:12.0];
+    self.textView.userInteractionEnabled = NO;
+    [self addSubview:self.textView];
 }
 
 // 添加连麦窗口

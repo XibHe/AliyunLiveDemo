@@ -22,6 +22,7 @@
 
 @interface StartLiveView : UIView
 @property (nonatomic, strong) UIView   *publisherView;    // 直播预览视图
+@property (nonatomic, strong) UITextView *textView;       // 推拉流性能参数
 @property (nonatomic, assign) id <StartLiveViewDelegate> delegate;
 
 // 添加连麦窗口

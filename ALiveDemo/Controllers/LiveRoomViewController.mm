@@ -551,7 +551,7 @@ typedef NS_ENUM(NSInteger, ALIVC_LIVE_ROOM_STATUS) {
     [alert showInView:self.liveRoomView];
 }
 
-#pragma mark - 
+#pragma mark - 推拉流性能参数
 - (void)updateInfo
 {
     if(self.liveRoomView.textView != nil ){

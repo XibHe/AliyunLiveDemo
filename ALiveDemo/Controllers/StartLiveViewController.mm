@@ -159,8 +159,14 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
         }
         [SendMessageManager joinChatRoomWithWebSocketInfoModel:infoModel success:^{
             NSLog(@"加入直播间成功");
+            
             // 很重要，决定了直播列表中是否存在正在直播的房间。
-            [self.publisherVideoCall startToPublish:self.rtmpURLString];
+            int ret = [self.publisherVideoCall startToPublish:self.rtmpURLString];
+            if (ret == 0) {
+                NSTimer *timer = [NSTimer timerWithTimeInterval:1 target:self selector:@selector(updateInfo) userInfo:nil repeats:YES];
+                [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSDefaultRunLoopMode];
+            }
+            self.liveStatus = ALIVC_START_LIVE_STATUS_LIVING;
         } error:^(NSError *error) {
             [self showAlertViewWithMessage:[NSString stringWithFormat:@"聊天SDK加入直播间失败error:%ld", (long)error.code]];
         }];
@@ -533,5 +539,51 @@ typedef NS_ENUM(NSInteger, ALIVC_START_LIVE_STATUS) {
     spot.center = fountainSource;
     [spot animateInView:self.view];
 }
-
+#pragma mark - 推拉流性能参数
+- (void)updateInfo
+{
+    if(self.startLiveView.textView != nil ){
+        // 推流性能参数
+        AlivcPublisherPerformanceInfo* info = [self.publisherVideoCall getPublisherPerformanceInfo];
+        NSMutableString *mutableString = [[NSMutableString alloc] init];
+        int encode_speed = (info.videoEncodedBitrate+info.audioEncodedBitrate);
+        int push_speed = (info.videoUploadedBitrate+info.audioUploadedBitrate);
+        int video_queue_number = info.videoPacketsInBuffer;
+        int audio_queue_number = info.audioPacketsInBuffer;
+        [mutableString appendString:[NSString stringWithFormat:@"编码速率(视频+音频): %d kb/sec \n",encode_speed]];
+        [mutableString appendString:[NSString stringWithFormat:@"上传速率(音频+视频): %d kb/sec \n",push_speed]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频buffer个数: %d  \n",video_queue_number]];
+        [mutableString appendString:[NSString stringWithFormat:@"音频buffer个数: %d  \n",audio_queue_number]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频编码码率: %d \n",info.videoEncoderParamOfBitrate]];
+        [mutableString appendString:[NSString stringWithFormat:@"当前上传视频帧PTS: %lld \n",info.currentlyUploadedVideoFramePts]];
+        [mutableString appendString:[NSString stringWithFormat:@"当前上传音频帧PTS: %lld \n",info.currentlyUploadedAudioFramePts]];
+        [mutableString appendString:[NSString stringWithFormat:@"当前上传关键帧PTS: %lld \n",info.previousKeyframePts]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频编码总帧数: %lld \n",info.totalFramesOfEncodedVideo]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频编码总耗时: %lld \n",info.totalTimeOfEncodedVideo]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频推流总耗时: %lld \n",info.totalTimeOfPublishing]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频上传总帧数: %lld \n",info.totalFramesOfVideoUploaded]];
+        [mutableString appendString:[NSString stringWithFormat:@"数据上传总大小: %lld \n",info.totalSizeOfUploadedPackets]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频丢帧总数: %lld \n",info.dropDurationOfVideoFrames]];
+        [mutableString appendString:[NSString stringWithFormat:@"视频从采集到上传耗时: %lld \n",info.videoDurationFromCaptureToUpload]];
+        [mutableString appendString:[NSString stringWithFormat:@"音频从采集到上传耗时: %lld \n",info.audioDurationFromCaptureToUpload]];
+        
+        // 拉流性能参数
+        NSURL* playUrl = nil;
+        if ([self.currentInviterArray count] > 0) {
+            playUrl = [NSURL URLWithString:[self.currentInviterArray objectAtIndex:0].playUrl];
+        }
+        AlivcPlayerPerformanceInfo* playerInfo = [self.publisherVideoCall getPlayerPerformanceInfo:playUrl];
+        if (playerInfo != nil) {
+            [mutableString appendString:[NSString stringWithFormat:@"视频buffer个数: %d \n",playerInfo.videoPacketsInBuffer]];
+            [mutableString appendString:[NSString stringWithFormat:@"音频buffer个数: %d \n",playerInfo.audioPacketsInBuffer]];
+            [mutableString appendString:[NSString stringWithFormat:@"视频从下载到渲染耗时: %d \n",playerInfo.videoDurationFromDownloadToRender]];
+            [mutableString appendString:[NSString stringWithFormat:@"音频从下载到渲染耗时: %d \n",playerInfo.audioDurationFromDownloadToRender]];
+            [mutableString appendString:[NSString stringWithFormat:@"最后一帧视频PTS: %lld \n",playerInfo.videoPtsOfLastPacketInBuffer]];
+            [mutableString appendString:[NSString stringWithFormat:@"最后一帧音频PTS: %lld \n",playerInfo.audioPtsOfLastPacketInBuffer]];
+            [mutableString appendString:[NSString stringWithFormat:@"视频下载速度: %d \n",playerInfo.packetDownloadSpeed]];
+        }
+        
+        self.startLiveView.textView.text = mutableString;
+    }
+}
 @end
