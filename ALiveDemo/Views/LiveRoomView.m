@@ -94,7 +94,13 @@
     // 连麦视图显示框
     self.pushView = [[ChatView alloc] initWithFrame:[self getChatViewFrameWithIndex:0]];
     self.pushView.delegate = self;
-    //self.pushView.closeBtn.hidden = YES;
+    
+    // 输出性能参数
+    self.textView = [[UITextView alloc] initWithFrame:CGRectMake(ScreenWidth - 250,100,250,350)];
+    self.textView.textColor = [UIColor redColor];
+    self.textView.font = [UIFont fontWithName:@"Arial" size:12.0];
+    self.textView.userInteractionEnabled = NO;
+    [self addSubview:self.textView];
 }
 
 - (CGRect)getChatViewFrameWithIndex:(NSInteger)index {

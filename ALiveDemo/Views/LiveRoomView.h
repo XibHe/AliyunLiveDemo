@@ -28,7 +28,7 @@
 @property (nonatomic, strong) UIView *mediaPalyerView;    // 直播播放视图
 @property (nonatomic, assign) id <LiveRoomViewDelegate> delegate;
 @property (nonatomic, strong) ChatView *pushView;
-
+@property (nonatomic, strong) UITextView *textView;
 
 /**
  添加多个连麦对话框
