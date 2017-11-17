@@ -72,7 +72,7 @@ static NSString *listCellIndentify = @"listCell";
         [self.listDataArray removeAllObjects];
         
         for (RoomInfoModel* model in roomInfos) {
-            if ([model.name rangeOfString:@"MyLive1_"].location != NSNotFound) {
+            if ([model.name rangeOfString:@"a_"].location != NSNotFound) {
                 [self.listDataArray addObject:model];
             }
         }

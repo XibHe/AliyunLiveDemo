@@ -207,24 +207,18 @@
 - (void)switchLiveFrame
 {
     CGFloat chatViewSizeWidth = 0;
-    ChatView *chatView;
-    for (chatView in [self subviews]) {
-        if (chatView.tag == 998877) {
-            chatViewSizeWidth = chatView.frame.size.width;
-        }
-    }
-    
+    ChatView *chatView = (ChatView *)[self viewWithTag:998877];
+    chatViewSizeWidth = chatView.frame.size.width;
+
     NSString *switchStatus = nil;
     if (chatViewSizeWidth < ScreenWidth) {
         [chatView setFrame:CGRectMake(0, 0, ScreenWidth, ScreenHeight)];
         [self.publisherView setFrame:[self getChatViewFrameWithIndex:0]];
         switchStatus = @"1";
-        [self layoutIfNeeded];
     } else {
         [chatView setFrame:[self getChatViewFrameWithIndex:0]];
         [self.publisherView setFrame:CGRectMake(0, 0, ScreenWidth, ScreenHeight)];
         switchStatus = @"0";
-        [self layoutIfNeeded];
     }
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(startLiveViewControllerSwitchFrame:)]) {
